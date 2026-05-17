@@ -1,0 +1,105 @@
+import {
+  EmbedBuilder,
+  Message,
+  PermissionFlagsBits,
+  TextChannel
+} from "discord.js";
+
+const inviteRegex =
+  /(discord\.gg\/|discord\.com\/invite\/|discordapp\.com\/invite\/)/i;
+
+const SUGGESTION_CHANNEL_ID = "1505272626128355520";
+
+export async function messageCreateEvent(message: Message) {
+  try {
+    if (message.author.bot) return;
+    if (!message.guild) return;
+
+    /*
+     * =========================
+     * SISTEMA DE SUGESTÕES
+     * =========================
+     */
+
+    if (message.channel.id === SUGGESTION_CHANNEL_ID) {
+      const content = message.content.trim();
+
+      if (!content.length) {
+        await message.delete().catch(() => {});
+        return;
+      }
+
+      await message.delete().catch(() => {});
+
+      const embed = new EmbedBuilder()
+        .setColor("#ff2d2d")
+        .setAuthor({
+          name: message.author.username,
+          iconURL: message.author.displayAvatarURL()
+        })
+        .setTitle("Nova sugestão")
+        .setDescription(content)
+        .setThumbnail(message.author.displayAvatarURL())
+        .setFooter({
+          text: `ID do usuário: ${message.author.id}`
+        })
+        .setTimestamp();
+
+      const suggestionMessage = await (
+        message.channel as TextChannel
+      ).send({
+        embeds: [embed]
+      });
+
+      await suggestionMessage.react("✅");
+      await suggestionMessage.react("❌");
+
+      console.log(
+        `[SUGESTÃO] ${message.author.tag}: ${content}`
+      );
+
+      return;
+    }
+
+    /*
+     * =========================
+     * ANTI CONVITE
+     * =========================
+     */
+
+    const member = message.member;
+
+    if (!member) return;
+
+    const isAdmin = member.permissions.has(
+      PermissionFlagsBits.Administrator
+    );
+
+    const isModerator = member.permissions.has(
+      PermissionFlagsBits.ModerateMembers
+    );
+
+    if (isAdmin || isModerator) return;
+
+    if (!inviteRegex.test(message.content)) return;
+
+    await message.delete().catch(() => {});
+
+    if (!message.channel.isSendable()) return;
+
+    const warning = await message.channel.send({
+      content: `${message.author}, links de convite não são permitidos neste servidor.`
+    });
+
+    setTimeout(() => {
+      warning.delete().catch(() => {});
+    }, 7000);
+
+    console.log(
+      `[ANTI-INVITE] ${message.author.tag} tentou enviar convite em #${message.channel}`
+    );
+
+  } catch (error) {
+    console.error("[DISCORD] Erro no messageCreate:", error);
+  }
+}

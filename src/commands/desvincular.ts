@@ -8,11 +8,14 @@ export const desvincularCommand = {
     .setName("desvincular")
     .setDescription(
       "Desvincule sua conta LS Optimizer."
-    ),
+    )
+    .setDMPermission(true),
 
   async execute(
     interaction: ChatInputCommandInteraction
   ) {
+    const shouldBeEphemeral = Boolean(interaction.guildId);
+
     try {
       const response = await fetch(
         `${process.env.LS_API_URL}/discord/link/unlink`,
@@ -34,37 +37,43 @@ export const desvincularCommand = {
       if (!response.ok) {
         throw new Error(
           data.message ||
-          "Não foi possível desvincular."
+          "Nao foi possivel desvincular."
         );
       }
 
       /*
-       * remove cargos
+       * remove cargos de plano no(s) servidor(es)
        */
+      const planRoleIds = [
+        process.env.ROLE_MONTHLY_ID,
+        process.env.ROLE_YEARLY_ID,
+        process.env.ROLE_LIFETIME_ID
+      ].filter(Boolean) as string[];
 
-      const guild =
-        interaction.client.guilds.cache.first();
+      if (planRoleIds.length > 0) {
+        const guildsToCheck = interaction.guild
+          ? [interaction.guild]
+          : Array.from(
+            interaction.client.guilds.cache.values()
+          );
 
-      if (guild) {
-        const member = await guild.members
-          .fetch(interaction.user.id)
-          .catch(() => null);
+        for (const guild of guildsToCheck) {
+          const member = await guild.members
+            .fetch(interaction.user.id)
+            .catch(() => null);
 
-        if (member) {
-          const roles = [
-            process.env.ROLE_MONTHLY_ID,
-            process.env.ROLE_YEARLY_ID,
-            process.env.ROLE_LIFETIME_ID
-          ].filter(Boolean) as string[];
+          if (!member) {
+            continue;
+          }
 
-          await member.roles.remove(roles);
+          await member.roles.remove(planRoleIds);
         }
       }
 
       await interaction.reply({
         content:
           "Sua conta foi desvinculada com sucesso.",
-        ephemeral: true
+        ephemeral: shouldBeEphemeral
       });
 
     } catch (error: any) {
@@ -77,7 +86,7 @@ export const desvincularCommand = {
         content:
           error?.message ||
           "Erro ao desvincular conta.",
-        ephemeral: true
+        ephemeral: shouldBeEphemeral
       });
     }
   }

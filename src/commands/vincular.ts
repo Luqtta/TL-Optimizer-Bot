@@ -9,6 +9,7 @@ export const vincularCommand = {
   data: new SlashCommandBuilder()
     .setName("vincular")
     .setDescription("Vincule sua conta LS Optimizer.")
+    .setDMPermission(true)
     .addStringOption(option =>
       option
         .setName("email")
@@ -19,6 +20,8 @@ export const vincularCommand = {
   async execute(
     interaction: ChatInputCommandInteraction
   ) {
+    const shouldBeEphemeral = Boolean(interaction.guildId);
+
     const email = interaction.options.getString(
       "email",
       true
@@ -26,11 +29,11 @@ export const vincularCommand = {
 
     try {
       /*
-       * testa se DM está aberta
+       * testa se DM esta aberta
        */
       await interaction.user.send({
         content:
-          "Verificando conexão de DM..."
+          "Verificando conexao de DM..."
       });
 
       /*
@@ -47,13 +50,13 @@ export const vincularCommand = {
        */
       await interaction.user.send({
         content:
-          `Código enviado para ${email}.\n\nDigite no privado do bot:\n/codigo CODIGO`
+          `Codigo enviado para ${email}.\n\nDigite no privado do bot:\n/codigo CODIGO`
       });
 
       await interaction.reply({
         content:
-          "Verificação enviada para sua DM.",
-        ephemeral: true
+          "Verificacao enviada para sua DM.",
+        ephemeral: shouldBeEphemeral
       });
 
     } catch (error: any) {
@@ -62,8 +65,8 @@ export const vincularCommand = {
       await interaction.reply({
         content:
           error?.message ||
-          "Não foi possível iniciar a vinculação.\nVerifique se sua DM está aberta.",
-        ephemeral: true
+          "Nao foi possivel iniciar a vinculacao.\nVerifique se sua DM esta aberta.",
+        ephemeral: shouldBeEphemeral
       });
     }
   }

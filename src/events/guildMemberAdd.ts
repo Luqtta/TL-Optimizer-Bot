@@ -2,7 +2,8 @@ import {
   GuildMember,
   AttachmentBuilder,
   EmbedBuilder,
-  TextChannel
+  TextChannel,
+  DiscordAPIError
 } from "discord.js";
 
 import {
@@ -115,6 +116,8 @@ export async function guildMemberAddEvent(member: GuildMember) {
       files: [attachment]
     });
 
+    await sendWelcomeDm(member);
+
     console.log(
       `[DISCORD] Novo membro: ${member.user.tag}`
     );
@@ -122,6 +125,51 @@ export async function guildMemberAddEvent(member: GuildMember) {
   } catch (error) {
     console.error(
       "[DISCORD] Erro no guildMemberAdd:",
+      error
+    );
+  }
+}
+
+async function sendWelcomeDm(member: GuildMember) {
+  const welcomeDmEmbed = new EmbedBuilder()
+    .setColor("#ff2d2d")
+    .setTitle("Boas-vindas ao LS OPTIMIZER")
+    .setDescription(
+      [
+        "O LS OPTIMIZER e uma plataforma de otimizacao para melhorar desempenho e experiencia no seu uso diario.",
+        "",
+        "**Como funciona**",
+        "Voce acessa os recursos da plataforma conforme o plano ativo da sua conta.",
+        "",
+        "**Como assinar**",
+        "Acesse o site oficial do LS OPTIMIZER, escolha seu plano e finalize a assinatura.",
+        "",
+        "**Ja e assinante?**",
+        "Use o comando `/vincular` no servidor para conectar sua conta.",
+        "Depois da vinculacao, voce recebe o cargo do seu plano e beneficios exclusivos automaticamente."
+      ].join("\n")
+    )
+    .setFooter({
+      text: "Se precisar de ajuda, abra um ticket no servidor."
+    });
+
+  try {
+    await member.send({
+      embeds: [welcomeDmEmbed]
+    });
+  } catch (error) {
+    if (
+      error instanceof DiscordAPIError &&
+      error.code === 50007
+    ) {
+      console.log(
+        `[DISCORD] DM fechada para ${member.user.tag}.`
+      );
+      return;
+    }
+
+    console.error(
+      `[DISCORD] Erro ao enviar DM de boas-vindas para ${member.user.tag}:`,
       error
     );
   }

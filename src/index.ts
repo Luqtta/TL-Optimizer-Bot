@@ -20,6 +20,7 @@ import { sugestaoCommand } from "./commands/sugestao.js";
 import { vincularCommand } from "./commands/vincular.js";
 import { desvincularCommand } from "./commands/desvincular.js";
 import { codigoCommand } from "./commands/codigo.js";
+import { qaCommand } from "./commands/qa.js";
 
 
 import {
@@ -150,6 +151,11 @@ client.on("interactionCreate", async (interaction: Interaction) => {
 
     if (interaction.commandName === "ticket") {
       await ticketCommand.execute(interaction);
+      return;
+    }
+
+    if (interaction.commandName === "qa") {
+      await qaCommand.execute(interaction);
       return;
     }
   } catch (error) {

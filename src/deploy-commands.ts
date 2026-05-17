@@ -10,6 +10,7 @@ import { sugestaoCommand } from "./commands/sugestao.js";
 import { vincularCommand } from "./commands/vincular.js";
 import { desvincularCommand } from "./commands/desvincular.js";
 import { codigoCommand } from "./commands/codigo.js";
+import { qaCommand } from "./commands/qa.js";
 
 dotenv.config();
 
@@ -23,7 +24,8 @@ const commands = [
   sugestaoCommand.data.toJSON(),
   vincularCommand.data.toJSON(),
   desvincularCommand.data.toJSON(),
-  codigoCommand.data.toJSON()
+  codigoCommand.data.toJSON(),
+  qaCommand.data.toJSON()
 ];
 const rest = new REST({ version: "10" }).setToken(
   process.env.DISCORD_TOKEN!

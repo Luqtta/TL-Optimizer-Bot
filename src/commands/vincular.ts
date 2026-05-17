@@ -29,6 +29,14 @@ export const vincularCommand = {
 
     try {
       /*
+       * responde imediatamente
+       * evita Unknown interaction
+       */
+      await interaction.deferReply({
+        ephemeral: shouldBeEphemeral
+      });
+
+      /*
        * testa se DM esta aberta
        */
       await interaction.user.send({
@@ -53,21 +61,39 @@ export const vincularCommand = {
           `Codigo enviado para ${email}.\n\nDigite no privado do bot:\n/codigo CODIGO`
       });
 
-      await interaction.reply({
+      /*
+       * resposta final da interaction
+       */
+      await interaction.editReply({
         content:
-          "Verificacao enviada para sua DM.",
-        ephemeral: shouldBeEphemeral
+          "Verificacao enviada para sua DM."
       });
 
     } catch (error: any) {
       console.error(error);
 
-      await interaction.reply({
-        content:
-          error?.message ||
-          "Nao foi possivel iniciar a vinculacao.\nVerifique se sua DM esta aberta.",
-        ephemeral: shouldBeEphemeral
-      });
+      const errorMessage =
+        error?.message ||
+        "Nao foi possivel iniciar a vinculacao.\nVerifique se sua DM esta aberta.";
+
+      try {
+        if (interaction.deferred || interaction.replied) {
+          await interaction.editReply({
+            content: errorMessage
+          });
+        } else {
+          await interaction.reply({
+            content: errorMessage,
+            ephemeral: shouldBeEphemeral
+          });
+        }
+      } catch (replyError) {
+        console.error(
+          "[VINCULAR] Falha ao responder interaction:",
+          replyError
+        );
+      }
     }
   }
 };
+

@@ -22,12 +22,10 @@ import { desvincularCommand } from "./commands/desvincular.js";
 import { codigoCommand } from "./commands/codigo.js";
 import { qaCommand } from "./commands/qa.js";
 
-
 import {
   handleTicketButton,
   handleTicketModal
 } from "./interactions/ticketButtons.js";
-
 
 import { startGithubWebhookServer } from "./services/githubWebhookServer.js";
 import { messageCreateEvent } from "./events/messageCreate.js";
@@ -102,7 +100,9 @@ client.on("interactionCreate", async (interaction: Interaction) => {
       return;
     }
 
-    if (!interaction.isChatInputCommand()) return;
+    if (!interaction.isChatInputCommand()) {
+      return;
+    }
 
     if (interaction.commandName === "ping") {
       await pingCommand.execute(interaction);
@@ -158,20 +158,35 @@ client.on("interactionCreate", async (interaction: Interaction) => {
       await qaCommand.execute(interaction);
       return;
     }
+
   } catch (error) {
     console.error("[DISCORD] Erro no interactionCreate:", error);
 
-    if (interaction.isRepliable()) {
-      if (interaction.replied || interaction.deferred) {
-        await interaction.editReply({
-          content: "Ocorreu um erro ao executar essa interação."
-        });
-      } else {
-        await interaction.reply({
-          content: "Ocorreu um erro ao executar essa interação.",
-          ephemeral: true
-        });
+    try {
+      if (
+        interaction.isRepliable()
+      ) {
+        if (
+          interaction.replied ||
+          interaction.deferred
+        ) {
+          await interaction.editReply({
+            content:
+              "Ocorreu um erro ao executar essa interação."
+          }).catch(() => {});
+        } else {
+          await interaction.reply({
+            content:
+              "Ocorreu um erro ao executar essa interação.",
+            ephemeral: true
+          }).catch(() => {});
+        }
       }
+    } catch (replyError) {
+      console.error(
+        "[DISCORD] Falha ao responder erro:",
+        replyError
+      );
     }
   }
 });
@@ -185,3 +200,4 @@ client.on("messageCreate", async (message) => {
 });
 
 client.login(process.env.DISCORD_TOKEN);
+

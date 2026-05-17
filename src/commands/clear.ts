@@ -21,7 +21,7 @@ export const clearCommand = {
 
   async execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply({
-      ephemeral: true
+      flags: 64
     });
 
     try {

@@ -32,7 +32,7 @@ export const codigoCommand = {
         await interaction.reply({
           content:
             "Use esse comando apenas na DM do bot.",
-          ephemeral: true
+          flags: 64
         });
 
         return;
@@ -77,7 +77,7 @@ export const codigoCommand = {
       await interaction.reply({
         content:
           `Conta vinculada com sucesso.\nPlano detectado: ${data.plan}`,
-        ephemeral: true
+        flags: 64
       });
 
     } catch (error: any) {
@@ -87,7 +87,7 @@ export const codigoCommand = {
         content:
           error?.message ||
           "Código inválido ou expirado.",
-        ephemeral: true
+        flags: 64
       });
     }
   }

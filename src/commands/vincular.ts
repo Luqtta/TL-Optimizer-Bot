@@ -33,7 +33,7 @@ export const vincularCommand = {
        * evita Unknown interaction
        */
       await interaction.deferReply({
-        ephemeral: shouldBeEphemeral
+        flags: shouldBeEphemeral ? 64 : undefined
       });
 
       /*
@@ -84,7 +84,7 @@ export const vincularCommand = {
         } else {
           await interaction.reply({
             content: errorMessage,
-            ephemeral: shouldBeEphemeral
+            flags: shouldBeEphemeral ? 64 : undefined
           });
         }
       } catch (replyError) {

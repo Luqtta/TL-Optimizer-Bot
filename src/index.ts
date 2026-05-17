@@ -178,7 +178,7 @@ client.on("interactionCreate", async (interaction: Interaction) => {
           await interaction.reply({
             content:
               "Ocorreu um erro ao executar essa interação.",
-            ephemeral: true
+            flags: 64
           }).catch(() => {});
         }
       }

@@ -29,7 +29,7 @@ export const ticketCommand = {
 
   async execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply({
-      ephemeral: true
+      flags: 64
     });
 
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {

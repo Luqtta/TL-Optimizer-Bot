@@ -86,7 +86,7 @@ export const regrasCommand = {
     if (!action) {
       await interaction.reply({
         embeds: [embed],
-        ephemeral: true
+        flags: 64
       });
 
       return;
@@ -96,7 +96,7 @@ export const regrasCommand = {
       if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
         await interaction.reply({
           content: "❌ Você não tem permissão para usar esse comando.",
-          ephemeral: true
+          flags: 64
         });
 
         return;
@@ -105,7 +105,7 @@ export const regrasCommand = {
       if (!channel || channel.type !== ChannelType.GuildText) {
         await interaction.reply({
           content: "❌ Selecione um canal de texto válido.",
-          ephemeral: true
+          flags: 64
         });
 
         return;
@@ -117,7 +117,7 @@ export const regrasCommand = {
 
       await interaction.reply({
         content: `✅ Regras enviadas com sucesso em ${channel}.`,
-        ephemeral: true
+        flags: 64
       });
 
       return;
@@ -125,7 +125,7 @@ export const regrasCommand = {
 
     await interaction.reply({
       content: "❌ Ação inválida.",
-      ephemeral: true
+      flags: 64
     });
   }
 };

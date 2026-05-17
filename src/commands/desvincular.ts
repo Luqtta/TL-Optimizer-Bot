@@ -73,7 +73,7 @@ export const desvincularCommand = {
       await interaction.reply({
         content:
           "Sua conta foi desvinculada com sucesso.",
-        ephemeral: shouldBeEphemeral
+        flags: shouldBeEphemeral ? 64 : undefined
       });
 
     } catch (error: any) {
@@ -86,7 +86,7 @@ export const desvincularCommand = {
         content:
           error?.message ||
           "Erro ao desvincular conta.",
-        ephemeral: shouldBeEphemeral
+        flags: shouldBeEphemeral ? 64 : undefined
       });
     }
   }

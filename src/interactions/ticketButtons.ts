@@ -18,7 +18,7 @@ export async function handleTicketButton(interaction: ButtonInteraction) {
   if (!interaction.guild) {
     await interaction.reply({
       content: "Esse botão só pode ser usado dentro de um servidor.",
-      ephemeral: true
+      flags: 64
     });
     return;
   }
@@ -33,7 +33,7 @@ export async function handleTicketButton(interaction: ButtonInteraction) {
     if (existingChannel) {
       await interaction.reply({
         content: `Você já possui um ticket aberto: ${existingChannel}`,
-        ephemeral: true
+        flags: 64
       });
       return;
     }
@@ -84,7 +84,7 @@ export async function handleTicketModal(interaction: ModalSubmitInteraction) {
   if (!interaction.guild) {
     await interaction.reply({
       content: "Esse modal só pode ser usado dentro de um servidor.",
-      ephemeral: true
+      flags: 64
     });
     return;
   }
@@ -92,7 +92,7 @@ export async function handleTicketModal(interaction: ModalSubmitInteraction) {
   if (interaction.customId !== "ticket_create_modal") return;
 
   await interaction.deferReply({
-    ephemeral: true
+    flags: 64
   });
 
   const categoryId = process.env.TICKET_CATEGORY_ID;
@@ -221,7 +221,7 @@ async function closeTicket(interaction: ButtonInteraction) {
   if (!interaction.guild || !channel || channel.type !== ChannelType.GuildText) {
     await interaction.reply({
       content: "Esse botão só pode ser usado dentro de um canal de ticket.",
-      ephemeral: true
+      flags: 64
     });
     return;
   }
@@ -229,13 +229,13 @@ async function closeTicket(interaction: ButtonInteraction) {
   if (!channel.name.startsWith("ticket-")) {
     await interaction.reply({
       content: "Esse canal não parece ser um ticket.",
-      ephemeral: true
+      flags: 64
     });
     return;
   }
 
   await interaction.deferReply({
-    ephemeral: true
+    flags: 64
   });
 
   const logChannelId = process.env.TICKET_LOG_CHANNEL_ID;

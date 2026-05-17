@@ -26,7 +26,7 @@ export const sugestaoCommand = {
     if (!channel || !(channel instanceof TextChannel)) {
       await interaction.reply({
         content: "Canal de sugestões não encontrado.",
-        ephemeral: true
+        flags: 64
       });
 
       return;
@@ -55,7 +55,7 @@ export const sugestaoCommand = {
 
     await interaction.reply({
       content: "Sua sugestão foi enviada com sucesso.",
-      ephemeral: true
+      flags: 64
     });
   }
 };

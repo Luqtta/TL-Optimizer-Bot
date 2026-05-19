@@ -7,9 +7,9 @@ import type { LinkedUser } from "../types/index.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dbPath = path.join(__dirname, "../../data/bot.db");
 
-let db: Database.Database | null = null;
+let db: any = null;
 
-export function initializeDatabase() {
+export function initializeDatabase(): void {
   db = new Database(dbPath);
   
   db.pragma("journal_mode = WAL");
@@ -52,10 +52,9 @@ export function initializeDatabase() {
   `);
 
   console.log("[DATABASE] Banco de dados inicializado em:", dbPath);
-  return db;
 }
 
-export function getDatabase(): Database.Database {
+export function getDatabase(): any {
   if (!db) {
     throw new Error("Database not initialized. Call initializeDatabase() first.");
   }

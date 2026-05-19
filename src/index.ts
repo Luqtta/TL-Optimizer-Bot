@@ -21,6 +21,9 @@ import { vincularCommand } from "./commands/vincular.js";
 import { desvincularCommand } from "./commands/desvincular.js";
 import { codigoCommand } from "./commands/codigo.js";
 import { qaCommand } from "./commands/qa.js";
+import { statsCommand } from "./commands/stats.js";
+import { syncCommand } from "./commands/sync.js";
+import { userStatusCommand } from "./commands/userstatus.js";
 
 import {
   handleTicketButton,
@@ -28,6 +31,9 @@ import {
 } from "./interactions/ticketButtons.js";
 
 import { startGithubWebhookServer } from "./services/githubWebhookServer.js";
+import { startLsOptimizerWebhookServer } from "./services/lsWebhook.service.js";
+import { initializeDatabase } from "./services/database.service.js";
+import { startReconcileScheduler, stopReconcileScheduler } from "./services/reconcile.service.js";
 import { messageCreateEvent } from "./events/messageCreate.js";
 import { guildMemberAddEvent } from "./events/guildMemberAdd.js";
 
@@ -45,6 +51,15 @@ const client = new Client({
 
 client.once("clientReady", () => {
   console.log(`[DISCORD] Bot online como ${client.user?.tag}`);
+
+  // Inicializar banco de dados
+  initializeDatabase();
+
+  // Inicializar webhook server do LS Optimizer
+  startLsOptimizerWebhookServer(client);
+
+  // Inicializar scheduler de reconciliação
+  startReconcileScheduler(client);
 
   const activities = [
     {
@@ -159,6 +174,21 @@ client.on("interactionCreate", async (interaction: Interaction) => {
       return;
     }
 
+    if (interaction.commandName === "stats") {
+      await statsCommand.execute(interaction);
+      return;
+    }
+
+    if (interaction.commandName === "sync") {
+      await syncCommand.execute(interaction);
+      return;
+    }
+
+    if (interaction.commandName === "userstatus") {
+      await userStatusCommand.execute(interaction);
+      return;
+    }
+
   } catch (error) {
     console.error("[DISCORD] Erro no interactionCreate:", error);
 
@@ -197,6 +227,14 @@ client.on("guildMemberAdd", async (member) => {
 
 client.on("messageCreate", async (message) => {
   await messageCreateEvent(message);
+});
+
+// Graceful shutdown
+process.on("SIGINT", async () => {
+  console.log("[BOT] Encerrando bot...");
+  stopReconcileScheduler();
+  await client.destroy();
+  process.exit(0);
 });
 
 client.login(process.env.DISCORD_TOKEN);

@@ -11,6 +11,9 @@ import { vincularCommand } from "./commands/vincular.js";
 import { desvincularCommand } from "./commands/desvincular.js";
 import { codigoCommand } from "./commands/codigo.js";
 import { qaCommand } from "./commands/qa.js";
+import { statsCommand } from "./commands/stats.js";
+import { syncCommand } from "./commands/sync.js";
+import { userStatusCommand } from "./commands/userstatus.js";
 
 dotenv.config();
 
@@ -25,7 +28,10 @@ const commands = [
   vincularCommand.data.toJSON(),
   desvincularCommand.data.toJSON(),
   codigoCommand.data.toJSON(),
-  qaCommand.data.toJSON()
+  qaCommand.data.toJSON(),
+  statsCommand.data.toJSON(),
+  syncCommand.data.toJSON(),
+  userStatusCommand.data.toJSON()
 ];
 const rest = new REST({ version: "10" }).setToken(
   process.env.DISCORD_TOKEN!

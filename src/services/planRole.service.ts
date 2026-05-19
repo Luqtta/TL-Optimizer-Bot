@@ -1,5 +1,8 @@
 import { GuildMember } from "discord.js";
 
+/**
+ * @deprecated Usar syncUserRoles from sync.service.ts em vez disso
+ */
 export async function syncPlanRoles(
   member: GuildMember,
   plan: string

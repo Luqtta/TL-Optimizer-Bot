@@ -1,0 +1,22 @@
+export interface LinkedUser {
+  discordId: string;
+  email: string;
+  plan: "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE";
+  status: "ACTIVE" | "CANCELED" | "EXPIRED";
+  updatedAt: number;
+}
+
+export interface WebhookEvent {
+  type: "LINKED" | "UNLINKED" | "UPGRADED" | "DOWNGRADED" | "RENEWED" | "CANCELED" | "REACTIVATED" | "EXPIRED" | "REFUNDED";
+  discordId: string;
+  email: string;
+  previousPlan?: string;
+  newPlan?: string;
+  timestamp: number;
+}
+
+export interface SyncResult {
+  success: boolean;
+  action?: "ADDED_ROLE" | "REMOVED_ROLE" | "UPDATED_ROLE" | "NO_ACTION";
+  reason?: string;
+}

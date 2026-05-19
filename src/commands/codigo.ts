@@ -4,7 +4,9 @@ import {
 } from "discord.js";
 
 import { confirmDiscordCode } from "../services/lsApi.service.js";
-import { syncPlanRoles } from "../services/planRole.service.js";
+import { addLinkedUser } from "../services/database.service.js";
+import { syncUserRolesInAllGuilds } from "../services/sync.service.js";
+import { sendSyncNotification } from "../services/dm.service.js";
 
 export const codigoCommand = {
   data: new SlashCommandBuilder()
@@ -22,10 +24,8 @@ export const codigoCommand = {
   ) {
     try {
       console.log("[CODIGO] comando recebido");
-      console.log("[CODIGO] TEST 1");
 
       const isDM = interaction.channel?.isDMBased();
-      console.log("[CODIGO] isDM:", isDM);
 
       if (!isDM) {
         console.log("[CODIGO] ❌ Não é DM!");
@@ -37,8 +37,6 @@ export const codigoCommand = {
 
         return;
       }
-
-      console.log("[CODIGO] ✅ É DM!");
 
       const code = interaction.options.getString(
         "codigo",
@@ -55,23 +53,32 @@ export const codigoCommand = {
       console.log("[CODIGO] resposta API:", data);
 
       /*
-       * pega membro do servidor
+       * Sincronizar cargos em todos os servidores
        */
-      const guild = interaction.client.guilds.cache.first();
-
-      if (!guild) {
-        throw new Error(
-          "Servidor não encontrado."
-        );
-      }
-
-      const member = await guild.members.fetch(
-        interaction.user.id
+      await syncUserRolesInAllGuilds(
+        interaction.client,
+        interaction.user.id,
+        data.plan
       );
 
-      await syncPlanRoles(
-        member,
-        data.plan
+      /*
+       * Salvar no banco de dados
+       */
+      addLinkedUser({
+        discordId: interaction.user.id,
+        email: data.email,
+        plan: data.plan,
+        status: "ACTIVE",
+        updatedAt: Date.now()
+      });
+
+      /*
+       * Enviar DM de notificação
+       */
+      await sendSyncNotification(
+        interaction.client,
+        interaction.user.id,
+        "LINKED"
       );
 
       await interaction.reply({

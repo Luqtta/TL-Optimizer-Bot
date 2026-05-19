@@ -3,6 +3,9 @@ import {
   SlashCommandBuilder
 } from "discord.js";
 
+import { removeLinkedUser } from "../services/database.service.js";
+import { syncUserRolesInAllGuilds } from "../services/sync.service.js";
+
 export const desvincularCommand = {
   data: new SlashCommandBuilder()
     .setName("desvincular")
@@ -42,33 +45,18 @@ export const desvincularCommand = {
       }
 
       /*
-       * remove cargos de plano no(s) servidor(es)
+       * remove cargos de plano em todos os servidores
        */
-      const planRoleIds = [
-        process.env.ROLE_MONTHLY_ID,
-        process.env.ROLE_YEARLY_ID,
-        process.env.ROLE_LIFETIME_ID
-      ].filter(Boolean) as string[];
+      await syncUserRolesInAllGuilds(
+        interaction.client,
+        interaction.user.id,
+        "FREE"
+      );
 
-      if (planRoleIds.length > 0) {
-        const guildsToCheck = interaction.guild
-          ? [interaction.guild]
-          : Array.from(
-            interaction.client.guilds.cache.values()
-          );
-
-        for (const guild of guildsToCheck) {
-          const member = await guild.members
-            .fetch(interaction.user.id)
-            .catch(() => null);
-
-          if (!member) {
-            continue;
-          }
-
-          await member.roles.remove(planRoleIds);
-        }
-      }
+      /*
+       * remove do banco de dados
+       */
+      removeLinkedUser(interaction.user.id);
 
       await interaction.reply({
         content:

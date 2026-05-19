@@ -9,6 +9,7 @@ import type {
 } from "discord.js";
 
 import dotenv from "dotenv";
+import express from "express";
 
 import { pingCommand } from "./commands/ping.js";
 import { muteCommand } from "./commands/mute.js";
@@ -30,8 +31,8 @@ import {
   handleTicketModal
 } from "./interactions/ticketButtons.js";
 
-import { startGithubWebhookServer } from "./services/githubWebhookServer.js";
-import { startLsOptimizerWebhookServer } from "./services/lsWebhook.service.js";
+import { registerGithubWebhookRoutes } from "./services/githubWebhookServer.js";
+import { registerLsOptimizerWebhookRoutes } from "./services/lsWebhook.service.js";
 import { initializeDatabase } from "./services/database.service.js";
 import { startReconcileScheduler, stopReconcileScheduler } from "./services/reconcile.service.js";
 import { messageCreateEvent } from "./events/messageCreate.js";
@@ -55,8 +56,25 @@ client.once("clientReady", () => {
   // Inicializar banco de dados
   initializeDatabase();
 
-  // Inicializar webhook server do LS Optimizer
-  startLsOptimizerWebhookServer(client);
+  // Inicializar servidor de webhooks unificado
+  const app = express();
+
+  app.use(
+    express.json({
+      verify: (req: any, _res, buf) => {
+        req.rawBody = buf;
+      }
+    })
+  );
+
+  registerLsOptimizerWebhookRoutes(app, client);
+  registerGithubWebhookRoutes(app, client);
+
+  const webhookPort = Number(process.env.PORT) || 3001;
+
+  app.listen(webhookPort, "0.0.0.0", () => {
+    console.log(`[WEBHOOK] Servidor unificado rodando em 0.0.0.0:${webhookPort}`);
+  });
 
   // Inicializar scheduler de reconciliação
   startReconcileScheduler(client);
@@ -99,8 +117,6 @@ client.once("clientReady", () => {
       status: "online"
     });
   }, 30_000);
-
-  startGithubWebhookServer(client);
 });
 
 client.on("interactionCreate", async (interaction: Interaction) => {

@@ -1,4 +1,4 @@
-import express from "express";
+import type { Express } from "express";
 import crypto from "crypto";
 
 import {
@@ -25,17 +25,7 @@ import type { WebhookEvent, LinkedUser } from "../types/index.js";
 // Set para deduplicação de eventos (últimas 1000)
 const recentEvents = new Set<string>();
 
-export function startLsOptimizerWebhookServer(client: Client) {
-  const app = express();
-
-  app.use(
-    express.json({
-      verify: (req: any, _res, buf) => {
-        req.rawBody = buf;
-      }
-    })
-  );
-
+export function registerLsOptimizerWebhookRoutes(app: Express, client: Client) {
   app.post("/webhooks/ls-optimizer", async (req: any, res) => {
     try {
       // Validação HMAC timing-safe
@@ -147,13 +137,6 @@ export function startLsOptimizerWebhookServer(client: Client) {
     }
   });
 
-  const PORT = process.env.WEBHOOK_PORT || 3001;
-
-  app.listen(PORT, () => {
-    console.log(
-      `[WEBHOOK] LS Optimizer webhook server ouvindo na porta ${PORT}`
-    );
-  });
 }
 
 async function handleWebhookEvent(

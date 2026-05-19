@@ -1,4 +1,4 @@
-import express from "express";
+import type { Express } from "express";
 import crypto from "crypto";
 
 import {
@@ -7,17 +7,7 @@ import {
   TextChannel
 } from "discord.js";
 
-export function startGithubWebhookServer(client: Client) {
-  const app = express();
-
-  app.use(
-    express.json({
-      verify: (req: any, _res, buf) => {
-        req.rawBody = buf;
-      }
-    })
-  );
-
+export function registerGithubWebhookRoutes(app: Express, client: Client) {
   app.post("/webhooks/github", async (req: any, res) => {
     try {
       const signature = req.headers["x-hub-signature-256"];
@@ -111,12 +101,4 @@ export function startGithubWebhookServer(client: Client) {
     }
   });
 
-  const port =
-    Number(process.env.PORT) || 3001;
-
-  app.listen(port, "0.0.0.0", () => {
-    console.log(
-      `[GITHUB] Webhook server rodando em 0.0.0.0:${port}`
-    );
-  });
 }

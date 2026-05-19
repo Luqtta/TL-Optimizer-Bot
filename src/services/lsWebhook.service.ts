@@ -230,7 +230,7 @@ async function handleLinked(client: Client, event: WebhookEvent): Promise<void> 
   const newUser: LinkedUser = {
     discordId: event.discordId,
     email: event.email,
-    plan: event.newPlan || "FREE",
+    plan: (event.newPlan || "FREE") as "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE",
     status: "ACTIVE",
     updatedAt: event.timestamp
   };
@@ -286,14 +286,14 @@ async function handleUpgraded(
 
   // Atualizar banco de dados
   updateLinkedUser(event.discordId, {
-    plan: event.newPlan || "FREE",
+    plan: (event.newPlan || "FREE") as "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE",
     status: "ACTIVE"
   });
 
   // Enviar DM
   await sendSyncNotification(client, event.discordId, "UPGRADED", {
-    previousPlan: event.previousPlan || "FREE",
-    newPlan: event.newPlan || "FREE"
+    previousPlan: (event.previousPlan || "FREE") as string,
+    newPlan: (event.newPlan || "FREE") as string
   });
 
   console.log(
@@ -321,14 +321,14 @@ async function handleDowngraded(
 
   // Atualizar banco de dados
   updateLinkedUser(event.discordId, {
-    plan: event.newPlan || "FREE",
+    plan: (event.newPlan || "FREE") as "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE",
     status: "ACTIVE"
   });
 
   // Enviar DM
   await sendSyncNotification(client, event.discordId, "DOWNGRADED", {
-    previousPlan: event.previousPlan || "FREE",
-    newPlan: event.newPlan || "FREE"
+    previousPlan: (event.previousPlan || "FREE") as string,
+    newPlan: (event.newPlan || "FREE") as string
   });
 
   console.log(
@@ -350,7 +350,7 @@ async function handleRenewed(
   await syncUserRolesInAllGuilds(
     client,
     event.discordId,
-    event.newPlan || user.plan
+    (event.newPlan || user.plan) as "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE"
   );
 
   // Atualizar banco de dados
@@ -360,7 +360,7 @@ async function handleRenewed(
 
   // Enviar DM
   await sendSyncNotification(client, event.discordId, "RENEWED", {
-    plan: event.newPlan || user.plan
+    plan: (event.newPlan || user.plan) as string
   });
 
   console.log(`[WEBHOOK] Assinatura de ${event.discordId} renovada.`);
@@ -401,7 +401,7 @@ async function handleReactivated(
   await syncUserRolesInAllGuilds(
     client,
     event.discordId,
-    event.newPlan || user.plan
+    (event.newPlan || user.plan) as "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE"
   );
 
   // Atualizar banco de dados
@@ -411,7 +411,7 @@ async function handleReactivated(
 
   // Enviar DM
   await sendSyncNotification(client, event.discordId, "REACTIVATED", {
-    plan: event.newPlan || user.plan
+    plan: (event.newPlan || user.plan) as string
   });
 
   console.log(`[WEBHOOK] Assinatura de ${event.discordId} reativada.`);

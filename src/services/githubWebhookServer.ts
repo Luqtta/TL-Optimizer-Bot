@@ -112,7 +112,7 @@ export function startGithubWebhookServer(client: Client) {
   });
 
   const port =
-    Number(process.env.GITHUB_WEBHOOK_PORT) || 3001;
+    Number(process.env.PORT) || 3001;
 
   app.listen(port, "0.0.0.0", () => {
     console.log(

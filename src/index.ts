@@ -11,20 +11,7 @@ import type {
 import dotenv from "dotenv";
 import express from "express";
 
-import { pingCommand } from "./commands/ping.js";
-import { muteCommand } from "./commands/mute.js";
-import { unmuteCommand } from "./commands/unmute.js";
-import { regrasCommand } from "./commands/regras.js";
-import { clearCommand } from "./commands/clear.js";
-import { ticketCommand } from "./commands/ticket.js";
-import { sugestaoCommand } from "./commands/sugestao.js";
-import { vincularCommand } from "./commands/vincular.js";
-import { desvincularCommand } from "./commands/desvincular.js";
-import { codigoCommand } from "./commands/codigo.js";
-import { qaCommand } from "./commands/qa.js";
-import { statsCommand } from "./commands/stats.js";
-import { syncCommand } from "./commands/sync.js";
-import { userStatusCommand } from "./commands/userstatus.js";
+import { commandMap } from "./commands/index.js";
 
 import {
   handleTicketButton,
@@ -32,13 +19,19 @@ import {
 } from "./interactions/ticketButtons.js";
 
 import { registerGithubWebhookRoutes } from "./services/githubWebhookServer.js";
-import { registerLsOptimizerWebhookRoutes } from "./services/lsWebhook.service.js";
-import { initializeDatabase } from "./services/database.service.js";
+import {
+  registerLsOptimizerWebhookRoutes,
+  reprocessPendingWebhookEvents
+} from "./services/lsWebhook.service.js";
+import { initializeDatabase, closeDatabase } from "./services/database.service.js";
 import { startReconcileScheduler, stopReconcileScheduler } from "./services/reconcile.service.js";
 import { messageCreateEvent } from "./events/messageCreate.js";
 import { guildMemberAddEvent } from "./events/guildMemberAdd.js";
+import { guildMemberUpdateEvent } from "./events/guildMemberUpdate.js";
+import { validateEnv } from "./utils/validateEnv.js";
 
 dotenv.config();
+validateEnv();
 
 const client = new Client({
   intents: [
@@ -67,6 +60,16 @@ client.once("clientReady", () => {
     })
   );
 
+  // Healthcheck para monitores de uptime / plataformas de hosting.
+  app.get("/health", (_req, res) => {
+    res.json({
+      status: "ok",
+      uptime: process.uptime(),
+      discord: client.isReady() ? "ready" : "not-ready",
+      wsPing: client.ws.ping
+    });
+  });
+
   registerLsOptimizerWebhookRoutes(app, client);
   registerGithubWebhookRoutes(app, client);
 
@@ -74,6 +77,11 @@ client.once("clientReady", () => {
 
   app.listen(webhookPort, "0.0.0.0", () => {
     console.log(`[WEBHOOK] Servidor unificado rodando em 0.0.0.0:${webhookPort}`);
+  });
+
+  // Reprocessar eventos de webhook que ficaram pendentes (ex.: queda do bot).
+  reprocessPendingWebhookEvents(client).catch((error) => {
+    console.error("[WEBHOOK] Erro ao reprocessar eventos pendentes:", error);
   });
 
   // Inicializar scheduler de reconciliação
@@ -135,74 +143,10 @@ client.on("interactionCreate", async (interaction: Interaction) => {
       return;
     }
 
-    if (interaction.commandName === "ping") {
-      await pingCommand.execute(interaction);
-      return;
-    }
+    const command = commandMap.get(interaction.commandName);
 
-    if (interaction.commandName === "regras") {
-      await regrasCommand.execute(interaction);
-      return;
-    }
-
-    if (interaction.commandName === "mute") {
-      await muteCommand.execute(interaction);
-      return;
-    }
-
-    if (interaction.commandName === "unmute") {
-      await unmuteCommand.execute(interaction);
-      return;
-    }
-
-    if (interaction.commandName === "clear") {
-      await clearCommand.execute(interaction);
-      return;
-    }
-
-    if (interaction.commandName === "sugestao") {
-      await sugestaoCommand.execute(interaction);
-      return;
-    }
-
-    if (interaction.commandName === "vincular") {
-      await vincularCommand.execute(interaction);
-      return;
-    }
-
-    if (interaction.commandName === "desvincular") {
-      await desvincularCommand.execute(interaction);
-      return;
-    }
-
-    if (interaction.commandName === "codigo") {
-      await codigoCommand.execute(interaction);
-      return;
-    }
-
-    if (interaction.commandName === "ticket") {
-      await ticketCommand.execute(interaction);
-      return;
-    }
-
-    if (interaction.commandName === "qa") {
-      await qaCommand.execute(interaction);
-      return;
-    }
-
-    if (interaction.commandName === "stats") {
-      await statsCommand.execute(interaction);
-      return;
-    }
-
-    if (interaction.commandName === "sync") {
-      await syncCommand.execute(interaction);
-      return;
-    }
-
-    if (interaction.commandName === "userstatus") {
-      await userStatusCommand.execute(interaction);
-      return;
+    if (command) {
+      await command.execute(interaction);
     }
 
   } catch (error) {
@@ -241,17 +185,25 @@ client.on("guildMemberAdd", async (member) => {
   await guildMemberAddEvent(member);
 });
 
+client.on("guildMemberUpdate", async (oldMember, newMember) => {
+  await guildMemberUpdateEvent(oldMember, newMember);
+});
+
 client.on("messageCreate", async (message) => {
   await messageCreateEvent(message);
 });
 
 // Graceful shutdown
-process.on("SIGINT", async () => {
-  console.log("[BOT] Encerrando bot...");
+async function shutdown(signal: string) {
+  console.log(`[BOT] Encerrando bot (${signal})...`);
   stopReconcileScheduler();
   await client.destroy();
+  closeDatabase();
   process.exit(0);
-});
+}
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
 
 client.login(process.env.DISCORD_TOKEN);
 

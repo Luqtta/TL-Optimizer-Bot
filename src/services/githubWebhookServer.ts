@@ -7,13 +7,25 @@ import {
   TextChannel
 } from "discord.js";
 
+// Comparação em tempo constante para evitar timing attacks na assinatura.
+function timingSafeCompare(a: string, b: string): boolean {
+  const bufferA = Buffer.from(a);
+  const bufferB = Buffer.from(b);
+
+  if (bufferA.length !== bufferB.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(bufferA, bufferB);
+}
+
 export function registerGithubWebhookRoutes(app: Express, client: Client) {
   app.post("/webhooks/github", async (req: any, res) => {
     try {
       const signature = req.headers["x-hub-signature-256"];
       const secret = process.env.GITHUB_WEBHOOK_SECRET;
 
-      if (!signature || !secret) {
+      if (!signature || typeof signature !== "string" || !secret) {
         return res.sendStatus(401);
       }
 
@@ -22,7 +34,7 @@ export function registerGithubWebhookRoutes(app: Express, client: Client) {
         "sha256=" +
         hmac.update(req.rawBody).digest("hex");
 
-      if (signature !== digest) {
+      if (!timingSafeCompare(signature, digest)) {
         console.log("[GITHUB] Assinatura inválida.");
         return res.sendStatus(401);
       }

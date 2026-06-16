@@ -11,12 +11,36 @@ import { sendSyncNotification } from "./dm.service.js";
 
 import type { SyncResult } from "../types/index.js";
 
+// Marca os membros cujos cargos o PRÓPRIO bot está alterando, para que o
+// anti-tampering (guildMemberUpdate) não confunda uma sincronização legítima
+// com manipulação manual. Janela curta cobre a latência do gateway.
+const botManagedSyncs = new Map<string, number>();
+const BOT_SYNC_WINDOW_MS = 5000;
+
+export function isBotManagedSync(discordId: string): boolean {
+  const expiry = botManagedSyncs.get(discordId);
+
+  if (!expiry) {
+    return false;
+  }
+
+  if (Date.now() > expiry) {
+    botManagedSyncs.delete(discordId);
+    return false;
+  }
+
+  return true;
+}
+
 export async function syncUserRoles(
   member: GuildMember,
   plan: string,
   previousPlan?: string
 ): Promise<SyncResult> {
   try {
+    // Sinaliza que este membro está sendo sincronizado pelo bot agora.
+    botManagedSyncs.set(member.id, Date.now() + BOT_SYNC_WINDOW_MS);
+
     const monthlyRoleId = process.env.ROLE_MONTHLY_ID;
     const yearlyRoleId = process.env.ROLE_YEARLY_ID;
     const lifetimeRoleId = process.env.ROLE_LIFETIME_ID;

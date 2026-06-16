@@ -64,15 +64,30 @@ export function getDatabase(): any {
   return db;
 }
 
+export function closeDatabase(): void {
+  if (db) {
+    db.close();
+    db = null;
+    console.log("[DATABASE] Conexão fechada (checkpoint WAL aplicado).");
+  }
+}
+
 // LINKED USERS
 
 export function addLinkedUser(user: LinkedUser): boolean {
   const db = getDatabase();
   
   try {
+    // Upsert: se o discord_id já existir (re-vinculação, troca de e-mail,
+    // reenvio de webhook), atualiza em vez de falhar na PRIMARY KEY.
     const stmt = db.prepare(`
       INSERT INTO linked_users (discord_id, email, plan, status, updated_at, created_at)
       VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(discord_id) DO UPDATE SET
+        email = excluded.email,
+        plan = excluded.plan,
+        status = excluded.status,
+        updated_at = excluded.updated_at
     `);
 
     const result = stmt.run(
@@ -238,6 +253,45 @@ export function markWebhookEventAsProcessed(eventId: number): boolean {
   } catch (error: any) {
     console.error("[DATABASE] Erro ao marcar evento como processado:", error.message);
     return false;
+  }
+}
+
+export interface PendingWebhookEvent {
+  id: number;
+  eventType: string;
+  discordId: string | null;
+  email: string | null;
+  previousPlan: string | null;
+  newPlan: string | null;
+  timestamp: number;
+}
+
+export function getPendingWebhookEvents(
+  sinceMs: number,
+  limit: number = 50
+): PendingWebhookEvent[] {
+  const db = getDatabase();
+
+  try {
+    const stmt = db.prepare(`
+      SELECT
+        id,
+        event_type AS eventType,
+        discord_id AS discordId,
+        email,
+        previous_plan AS previousPlan,
+        new_plan AS newPlan,
+        timestamp
+      FROM webhook_events
+      WHERE processed = 0 AND timestamp >= ?
+      ORDER BY timestamp ASC
+      LIMIT ?
+    `);
+
+    return stmt.all(sinceMs, limit) as PendingWebhookEvent[];
+  } catch (error: any) {
+    console.error("[DATABASE] Erro ao buscar eventos pendentes:", error.message);
+    return [];
   }
 }
 

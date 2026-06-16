@@ -14,6 +14,7 @@ import {
   removeLinkedUser,
   addWebhookEvent,
   markWebhookEventAsProcessed,
+  getPendingWebhookEvents,
   addSyncLog
 } from "./database.service.js";
 
@@ -139,6 +140,54 @@ export function registerLsOptimizerWebhookRoutes(app: Express, client: Client) {
 
 }
 
+// Apenas despacha o evento para o handler correto. NÃO grava na tabela
+// (quem grava é handleWebhookEvent); assim pode ser reusado no reprocessamento.
+async function dispatchWebhookEvent(
+  client: Client,
+  event: WebhookEvent
+): Promise<void> {
+  switch (event.type) {
+    case "LINKED":
+      await handleLinked(client, event);
+      break;
+
+    case "UNLINKED":
+      await handleUnlinked(client, event);
+      break;
+
+    case "UPGRADED":
+      await handleUpgraded(client, event);
+      break;
+
+    case "DOWNGRADED":
+      await handleDowngraded(client, event);
+      break;
+
+    case "RENEWED":
+      await handleRenewed(client, event);
+      break;
+
+    case "CANCELED":
+      await handleCanceled(client, event);
+      break;
+
+    case "REACTIVATED":
+      await handleReactivated(client, event);
+      break;
+
+    case "EXPIRED":
+      await handleExpired(client, event);
+      break;
+
+    case "REFUNDED":
+      await handleRefunded(client, event);
+      break;
+
+    default:
+      console.warn("[WEBHOOK] Evento desconhecido:", event.type);
+  }
+}
+
 async function handleWebhookEvent(
   client: Client,
   event: WebhookEvent
@@ -152,47 +201,7 @@ async function handleWebhookEvent(
   });
 
   try {
-    switch (event.type) {
-      case "LINKED":
-        await handleLinked(client, event);
-        break;
-
-      case "UNLINKED":
-        await handleUnlinked(client, event);
-        break;
-
-      case "UPGRADED":
-        await handleUpgraded(client, event);
-        break;
-
-      case "DOWNGRADED":
-        await handleDowngraded(client, event);
-        break;
-
-      case "RENEWED":
-        await handleRenewed(client, event);
-        break;
-
-      case "CANCELED":
-        await handleCanceled(client, event);
-        break;
-
-      case "REACTIVATED":
-        await handleReactivated(client, event);
-        break;
-
-      case "EXPIRED":
-        await handleExpired(client, event);
-        break;
-
-      case "REFUNDED":
-        await handleRefunded(client, event);
-        break;
-
-      default:
-        console.warn("[WEBHOOK] Evento desconhecido:", event.type);
-    }
-
+    await dispatchWebhookEvent(client, event);
     markWebhookEventAsProcessed(eventId);
   } catch (error: any) {
     console.error(
@@ -200,6 +209,7 @@ async function handleWebhookEvent(
       error.message
     );
 
+    // Evento permanece com processed=0 e será reprocessado no próximo boot.
     addSyncLog({
       discordId: event.discordId,
       action: `WEBHOOK_ERROR_${event.type}`,
@@ -207,6 +217,66 @@ async function handleWebhookEvent(
       success: false
     });
   }
+}
+
+// Reprocessa eventos que ficaram pendentes (processed=0) por falha transitória
+// — ex.: o bot caiu antes de terminar, ou a guild ainda não tinha o membro.
+// Chamado uma vez quando o client fica pronto. Limita a 24h para não ficar
+// retentando eventos permanentemente quebrados para sempre.
+export async function reprocessPendingWebhookEvents(
+  client: Client
+): Promise<void> {
+  const since = Date.now() - 24 * 60 * 60 * 1000;
+  const pending = getPendingWebhookEvents(since, 50);
+
+  if (pending.length === 0) {
+    return;
+  }
+
+  console.log(
+    `[WEBHOOK] Reprocessando ${pending.length} evento(s) pendente(s)...`
+  );
+
+  let recovered = 0;
+
+  for (const row of pending) {
+    // Eventos sem dados essenciais não têm como ser reprocessados.
+    if (!row.discordId || !row.email) {
+      markWebhookEventAsProcessed(row.id);
+      continue;
+    }
+
+    const event: WebhookEvent = {
+      type: row.eventType as WebhookEvent["type"],
+      discordId: row.discordId,
+      email: row.email,
+      previousPlan: row.previousPlan ?? undefined,
+      newPlan: row.newPlan ?? undefined,
+      timestamp: row.timestamp
+    };
+
+    try {
+      await dispatchWebhookEvent(client, event);
+      markWebhookEventAsProcessed(row.id);
+      recovered++;
+    } catch (error: any) {
+      console.error(
+        `[WEBHOOK] Falha ao reprocessar evento ${row.id} (${row.eventType}):`,
+        error.message
+      );
+
+      addSyncLog({
+        discordId: row.discordId,
+        action: `WEBHOOK_RETRY_FAILED_${row.eventType}`,
+        reason: error.message,
+        success: false
+      });
+    }
+  }
+
+  console.log(
+    `[WEBHOOK] Reprocessamento concluído: ${recovered}/${pending.length} recuperado(s).`
+  );
 }
 
 async function handleLinked(client: Client, event: WebhookEvent): Promise<void> {

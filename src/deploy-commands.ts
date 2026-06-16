@@ -1,38 +1,11 @@
 import { REST, Routes } from "discord.js";
 import dotenv from "dotenv";
-import { pingCommand } from "./commands/ping.js";
-import { regrasCommand } from "./commands/regras.js";
-import { muteCommand } from "./commands/mute.js";
-import { unmuteCommand } from "./commands/unmute.js";
-import { clearCommand } from "./commands/clear.js";
-import { ticketCommand } from "./commands/ticket.js";
-import { sugestaoCommand } from "./commands/sugestao.js";
-import { vincularCommand } from "./commands/vincular.js";
-import { desvincularCommand } from "./commands/desvincular.js";
-import { codigoCommand } from "./commands/codigo.js";
-import { qaCommand } from "./commands/qa.js";
-import { statsCommand } from "./commands/stats.js";
-import { syncCommand } from "./commands/sync.js";
-import { userStatusCommand } from "./commands/userstatus.js";
+import { commands as botCommands } from "./commands/index.js";
 
 dotenv.config();
 
-const commands = [
-  pingCommand.data.toJSON(),
-  regrasCommand.data.toJSON(),
-  muteCommand.data.toJSON(),
-  unmuteCommand.data.toJSON(),
-  clearCommand.data.toJSON(),
-  ticketCommand.data.toJSON(),
-  sugestaoCommand.data.toJSON(),
-  vincularCommand.data.toJSON(),
-  desvincularCommand.data.toJSON(),
-  codigoCommand.data.toJSON(),
-  qaCommand.data.toJSON(),
-  statsCommand.data.toJSON(),
-  syncCommand.data.toJSON(),
-  userStatusCommand.data.toJSON()
-];
+const commands = botCommands.map((command) => command.data.toJSON());
+
 const rest = new REST({ version: "10" }).setToken(
   process.env.DISCORD_TOKEN!
 );

@@ -8,13 +8,113 @@ import {
 
 import {
   createCanvas,
-  loadImage
+  loadImage,
+  registerFont
 } from "canvas";
+
+import { fileURLToPath } from "node:url";
+import { existsSync } from "node:fs";
+import path from "node:path";
+
+// Registra fontes empacotadas no projeto para que a renderização do canvas
+// seja idêntica em qualquer ambiente (servidor Linux, container, etc). Sem
+// isso, "Sans" depende de uma fonte do sistema que pode não existir em
+// produção, fazendo o texto virar quadradinhos (□□□).
+const FONT_FAMILY = "DejaVu Sans";
+const FONT_FALLBACK = "Noto Sans Arabic";
+// Pilha de fontes: usa DejaVu (latino) e cai para Noto Arabic em nomes com
+// escrita árabe. Outros alfabetos (ex.: CJK) exigiriam fontes adicionais.
+const FONT_STACK = `"${FONT_FAMILY}", "${FONT_FALLBACK}"`;
+
+const BACKGROUND_FALLBACK_URL =
+  "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1600&auto=format&fit=crop";
+
+// Resolve a pasta de assets nos locais possíveis: copiada para dentro do dist
+// (deploy só do build) ou na raiz do projeto (deploy completo).
+function resolveAssetsDir(): string {
+  const baseDir = path.dirname(fileURLToPath(import.meta.url));
+
+  const candidates = [
+    path.join(baseDir, "../assets"),
+    path.join(baseDir, "../../assets"),
+    path.join(process.cwd(), "assets")
+  ];
+
+  return (
+    candidates.find((dir) =>
+      existsSync(path.join(dir, "fonts/DejaVuSans.ttf"))
+    ) ?? candidates[0]!
+  );
+}
+
+const assetsDir = resolveAssetsDir();
+const backgroundPath = path.join(assetsDir, "images/welcome-bg.jpg");
+
+let fontsRegistered = false;
+
+function ensureFontsRegistered() {
+  if (fontsRegistered) {
+    return;
+  }
+
+  try {
+    const fontsDir = path.join(assetsDir, "fonts");
+
+    registerFont(path.join(fontsDir, "DejaVuSans.ttf"), {
+      family: FONT_FAMILY,
+      weight: "normal"
+    });
+
+    registerFont(path.join(fontsDir, "DejaVuSans-Bold.ttf"), {
+      family: FONT_FAMILY,
+      weight: "bold"
+    });
+
+    // Fallback opcional para nomes em árabe — só registra se presente, para
+    // não quebrar caso esses arquivos não estejam empacotados.
+    const notoRegular = path.join(fontsDir, "NotoSansArabic-Regular.ttf");
+    const notoBold = path.join(fontsDir, "NotoSansArabic-Bold.ttf");
+
+    if (existsSync(notoRegular)) {
+      registerFont(notoRegular, { family: FONT_FALLBACK, weight: "normal" });
+    }
+    if (existsSync(notoBold)) {
+      registerFont(notoBold, { family: FONT_FALLBACK, weight: "bold" });
+    }
+
+    fontsRegistered = true;
+  } catch (error) {
+    console.error(
+      "[DISCORD] Falha ao registrar fontes do canvas:",
+      error
+    );
+  }
+}
+
+// Evita que nomes muito longos estourem o layout da imagem.
+function truncateName(text: string, max = 18): string {
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
+
+// Carrega o fundo localmente; cai para a URL remota se o arquivo não existir.
+async function loadBackground() {
+  try {
+    if (existsSync(backgroundPath)) {
+      return await loadImage(backgroundPath);
+    }
+  } catch (error) {
+    console.error("[DISCORD] Falha ao carregar fundo local, usando remoto:", error);
+  }
+
+  return await loadImage(BACKGROUND_FALLBACK_URL);
+}
 
 export async function guildMemberAddEvent(member: GuildMember) {
   try {
     const roleId = process.env.AUTO_ROLE_ID!;
     const channelId = process.env.WELCOME_CHANNEL_ID!;
+
+    ensureFontsRegistered();
 
     await member.roles.add(roleId);
 
@@ -28,9 +128,7 @@ export async function guildMemberAddEvent(member: GuildMember) {
     const ctx = canvas.getContext("2d");
 
     // Background
-    const background = await loadImage(
-      "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1600&auto=format&fit=crop"
-    );
+    const background = await loadBackground();
 
     ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
 
@@ -70,15 +168,15 @@ export async function guildMemberAddEvent(member: GuildMember) {
 
     // Texto
     ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 52px Sans";
+    ctx.font = `bold 52px ${FONT_STACK}`;
     ctx.fillText("BEM-VINDO", 360, 150);
 
     ctx.fillStyle = "#ff2d2d";
-    ctx.font = "bold 42px Sans";
-    ctx.fillText(member.user.username, 360, 210);
+    ctx.font = `bold 42px ${FONT_STACK}`;
+    ctx.fillText(truncateName(member.user.username), 360, 210);
 
     ctx.fillStyle = "#d1d5db";
-    ctx.font = "28px Sans";
+    ctx.font = `28px ${FONT_STACK}`;
     ctx.fillText(
       "ao servidor oficial do LS Optimizer",
       360,
@@ -86,7 +184,7 @@ export async function guildMemberAddEvent(member: GuildMember) {
     );
 
     ctx.fillStyle = "#9ca3af";
-    ctx.font = "22px Sans";
+    ctx.font = `22px ${FONT_STACK}`;
     ctx.fillText(
       `Membro #${member.guild.memberCount}`,
       360,

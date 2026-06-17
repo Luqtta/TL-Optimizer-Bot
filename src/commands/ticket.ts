@@ -69,6 +69,9 @@ export const ticketCommand = {
           "Clique no botão abaixo para abrir seu atendimento."
         ].join("\n")
       )
+      .setImage(
+        "https://media.discordapp.net/attachments/1504995651308621941/1516952826037796977/LS_Optimizer_Suporte_Banner.png?ex=6a3483e9&is=6a333269&hm=f4f9c8793f38d356c3696b8f569a3159f0341730debd5103b35e388370cce1e9&=&format=webp&quality=lossless"
+      )
       .setFooter({
         text: "LS Optimizer • Sistema de suporte"
       })

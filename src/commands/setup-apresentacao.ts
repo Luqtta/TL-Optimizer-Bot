@@ -12,7 +12,7 @@ function createApresentacaoEmbed() {
     .setColor("#CC0000")
     .setDescription(
       [
-        "Bem-vindo ao servidor oficial do **LS Optimizer**! <:ls:1517593146505297961>",
+        "Bem-vindo ao servidor oficial do **LS Optimizer**! <:ls:1517592999716982996>",
         "",
         "Aqui você encontra suporte, novidades, atualizações e uma comunidade focada em performance e otimização de PC para games.",
         "",
@@ -23,10 +23,10 @@ function createApresentacaoEmbed() {
         "**MAXIMIZE SEU PC** ⚡",
         "",
         "**Links Úteis**",
-        "<:ls:1517593146505297961> [Site](https://lsoptimizer.com) • <:discord:1517593115026788483> [Discord](https://discord.gg/J9y352CDbz)",
+        "<:ls:1517592999716982996> [Site](https://lsoptimizer.com) • <:discord:1517592080308764754> [Discord](https://discord.gg/J9y352CDbz)",
         "",
         "**Redes Sociais**",
-        "<:tiktok:1517593155426582679> [TikTok](https://www.tiktok.com/@lsoptimizer) • <:youtube:1517593124619292802> [YouTube](https://www.youtube.com/@LsOptimizerbr) • <:instagram:1517593172048351233> [Instagram](https://www.instagram.com/lsoptimizer/)"
+        "<:tiktok:1517592036549591236> [TikTok](https://www.tiktok.com/@lsoptimizer) • <:youtube:1517592095500533952> [YouTube](https://www.youtube.com/@LsOptimizerbr) • <:instagram:1517592064898896053> [Instagram](https://www.instagram.com/lsoptimizer/)"
       ].join("\n")
     )
     .setImage(

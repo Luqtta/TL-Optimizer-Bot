@@ -25,6 +25,7 @@ import {
 } from "./services/lsWebhook.service.js";
 import { initializeDatabase, closeDatabase } from "./services/database.service.js";
 import { startReconcileScheduler, stopReconcileScheduler } from "./services/reconcile.service.js";
+import { startGiveawayScheduler } from "./services/giveaway.service.js";
 import { messageCreateEvent } from "./events/messageCreate.js";
 import { guildMemberAddEvent } from "./events/guildMemberAdd.js";
 import { guildMemberUpdateEvent } from "./events/guildMemberUpdate.js";
@@ -48,6 +49,9 @@ client.once("clientReady", () => {
 
   // Inicializar banco de dados
   initializeDatabase();
+
+  // Reagendar sorteios ativos que sobreviveram a um restart
+  startGiveawayScheduler(client);
 
   // Inicializar servidor de webhooks unificado
   const app = express();

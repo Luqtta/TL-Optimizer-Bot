@@ -7,6 +7,7 @@ import { unmuteCommand } from "./unmute.js";
 import { clearCommand } from "./clear.js";
 import { ticketCommand } from "./ticket.js";
 import { setupApresentacaoCommand } from "./setup-apresentacao.js";
+import { sorteioCommand } from "./sorteio.js";
 import { sugestaoCommand } from "./sugestao.js";
 import { vincularCommand } from "./vincular.js";
 import { desvincularCommand } from "./desvincular.js";
@@ -34,6 +35,7 @@ export const commands: BotCommand[] = [
   clearCommand,
   ticketCommand,
   setupApresentacaoCommand,
+  sorteioCommand,
   sugestaoCommand,
   vincularCommand,
   desvincularCommand,

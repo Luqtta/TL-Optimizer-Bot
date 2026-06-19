@@ -20,3 +20,15 @@ export interface SyncResult {
   action?: "ADDED_ROLE" | "REMOVED_ROLE" | "UPDATED_ROLE" | "NO_ACTION";
   reason?: string;
 }
+
+export interface Giveaway {
+  messageId: string;
+  channelId: string;
+  guildId: string;
+  prize: string;
+  winnersCount: number;
+  minParticipants: number;
+  endAt: number;
+  hostId: string;
+  status: "ACTIVE" | "ENDED" | "CANCELED";
+}

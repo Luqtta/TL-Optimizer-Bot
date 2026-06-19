@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
-import type { LinkedUser } from "../types/index.js";
+import type { LinkedUser, Giveaway } from "../types/index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dbDir = path.join(__dirname, "../../data");
@@ -49,9 +49,23 @@ export function initializeDatabase(): void {
       timestamp INTEGER NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS giveaways (
+      message_id TEXT PRIMARY KEY,
+      channel_id TEXT NOT NULL,
+      guild_id TEXT NOT NULL,
+      prize TEXT NOT NULL,
+      winners_count INTEGER NOT NULL,
+      min_participants INTEGER NOT NULL,
+      end_at INTEGER NOT NULL,
+      host_id TEXT NOT NULL,
+      status TEXT NOT NULL CHECK(status IN ('ACTIVE', 'ENDED', 'CANCELED')) DEFAULT 'ACTIVE',
+      created_at INTEGER NOT NULL
+    );
+
     CREATE INDEX IF NOT EXISTS idx_linked_users_email ON linked_users(email);
     CREATE INDEX IF NOT EXISTS idx_webhook_events_discord_id ON webhook_events(discord_id);
     CREATE INDEX IF NOT EXISTS idx_webhook_events_processed ON webhook_events(processed);
+    CREATE INDEX IF NOT EXISTS idx_giveaways_status ON giveaways(status);
   `);
 
   console.log("[DATABASE] Banco de dados inicializado em:", dbPath);
@@ -347,5 +361,104 @@ export function getSyncLogs(discordId?: string, limit: number = 100): any[] {
   } catch (error: any) {
     console.error("[DATABASE] Erro ao buscar sync logs:", error.message);
     return [];
+  }
+}
+
+// GIVEAWAYS
+
+const GIVEAWAY_COLUMNS = `
+  message_id AS messageId,
+  channel_id AS channelId,
+  guild_id AS guildId,
+  prize,
+  winners_count AS winnersCount,
+  min_participants AS minParticipants,
+  end_at AS endAt,
+  host_id AS hostId,
+  status
+`;
+
+export function addGiveaway(giveaway: Giveaway): boolean {
+  const db = getDatabase();
+
+  try {
+    const stmt = db.prepare(`
+      INSERT INTO giveaways (
+        message_id, channel_id, guild_id, prize, winners_count,
+        min_participants, end_at, host_id, status, created_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const result = stmt.run(
+      giveaway.messageId,
+      giveaway.channelId,
+      giveaway.guildId,
+      giveaway.prize,
+      giveaway.winnersCount,
+      giveaway.minParticipants,
+      giveaway.endAt,
+      giveaway.hostId,
+      giveaway.status,
+      Date.now()
+    );
+
+    return result.changes > 0;
+  } catch (error: any) {
+    console.error("[DATABASE] Erro ao adicionar sorteio:", error.message);
+    return false;
+  }
+}
+
+export function getGiveaway(messageId: string): Giveaway | null {
+  const db = getDatabase();
+
+  try {
+    const stmt = db.prepare(`
+      SELECT ${GIVEAWAY_COLUMNS}
+      FROM giveaways
+      WHERE message_id = ?
+    `);
+
+    return (stmt.get(messageId) as Giveaway | undefined) || null;
+  } catch (error: any) {
+    console.error("[DATABASE] Erro ao buscar sorteio:", error.message);
+    return null;
+  }
+}
+
+export function getActiveGiveaways(): Giveaway[] {
+  const db = getDatabase();
+
+  try {
+    const stmt = db.prepare(`
+      SELECT ${GIVEAWAY_COLUMNS}
+      FROM giveaways
+      WHERE status = 'ACTIVE'
+      ORDER BY end_at ASC
+    `);
+
+    return stmt.all() as Giveaway[];
+  } catch (error: any) {
+    console.error("[DATABASE] Erro ao buscar sorteios ativos:", error.message);
+    return [];
+  }
+}
+
+export function updateGiveawayStatus(
+  messageId: string,
+  status: Giveaway["status"]
+): boolean {
+  const db = getDatabase();
+
+  try {
+    const stmt = db.prepare(
+      "UPDATE giveaways SET status = ? WHERE message_id = ?"
+    );
+    const result = stmt.run(status, messageId);
+    return result.changes > 0;
+  } catch (error: any) {
+    console.error("[DATABASE] Erro ao atualizar status do sorteio:", error.message);
+    return false;
   }
 }

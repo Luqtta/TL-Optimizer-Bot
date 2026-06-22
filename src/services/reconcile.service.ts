@@ -112,7 +112,7 @@ async function reconcileUser(
   user: LinkedUser
 ): Promise<{ corrected: boolean }> {
   try {
-    const backendUser = await fetchUserFromBackend(user.email);
+    const backendUser = await fetchUserFromBackend(user.discordId);
 
     if (!backendUser) {
       throw new Error(`Usuário não encontrado no backend: ${user.email}`);
@@ -184,7 +184,7 @@ async function reconcileUser(
   }
 }
 
-async function fetchUserFromBackend(email: string): Promise<any> {
+async function fetchUserFromBackend(discordId: string): Promise<any> {
   try {
     const response = await fetch(
       `${process.env.LS_API_URL}/discord/link/sync`,
@@ -194,7 +194,7 @@ async function fetchUserFromBackend(email: string): Promise<any> {
           "Content-Type": "application/json",
           "X-Bot-Api-Key": process.env.DISCORD_BOT_API_KEY || ""
         },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ discordId })
       }
     );
 
@@ -203,7 +203,14 @@ async function fetchUserFromBackend(email: string): Promise<any> {
     }
 
     const data = await response.json();
-    return data;
+
+    // O backend expõe o status da assinatura como `subscriptionStatus`.
+    // Normalizamos para `status` (tolerando ambos) para o resto do fluxo de
+    // reconciliação, que lê `backendUser.status`.
+    return {
+      ...data,
+      status: data.status ?? data.subscriptionStatus
+    };
   } catch (error: any) {
     console.error(
       "[RECONCILE] Erro ao buscar dados do backend:",

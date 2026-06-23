@@ -40,7 +40,7 @@ export const desvincularCommand = {
       if (!response.ok) {
         throw new Error(
           data.message ||
-          "Nao foi possivel desvincular."
+          "Não foi possível desvincular."
         );
       }
 

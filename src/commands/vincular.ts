@@ -41,7 +41,7 @@ export const vincularCommand = {
        */
       await interaction.user.send({
         content:
-          "Verificando conexao de DM..."
+          "Verificando conexão de DM..."
       });
 
       /*
@@ -58,7 +58,7 @@ export const vincularCommand = {
        */
       await interaction.user.send({
         content:
-          `Codigo enviado para ${email}.\n\nDigite no privado do bot:\n/codigo CODIGO`
+          `Código enviado para ${email}.\n\nDigite no privado do bot:\n/codigo CODIGO`
       });
 
       /*
@@ -66,7 +66,7 @@ export const vincularCommand = {
        */
       await interaction.editReply({
         content:
-          "Verificacao enviada para sua DM."
+          "Verificação enviada para sua DM."
       });
 
     } catch (error: any) {
@@ -74,7 +74,7 @@ export const vincularCommand = {
 
       const errorMessage =
         error?.message ||
-        "Nao foi possivel iniciar a vinculacao.\nVerifique se sua DM esta aberta.";
+        "Não foi possível iniciar a vinculação.\nVerifique se sua DM está aberta.";
 
       try {
         if (interaction.deferred || interaction.replied) {

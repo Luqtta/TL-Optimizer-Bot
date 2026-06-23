@@ -23,6 +23,12 @@ const eventColors = {
   REFUNDED: "#C7CEEA" // lavanda
 };
 
+// Logo do LS Optimizer no rodapé das DMs de notificação.
+// ⚠️ ATENÇÃO: URL de anexo do Discord expira (~24h). Para não quebrar, troque
+// depois por um host permanente (ex.: https://lsoptimizer.com/logo.png).
+const LOGO_URL =
+  "https://media.discordapp.net/attachments/1508950013668098078/1517300449252737045/image.png?ex=6a3b0da9&is=6a39bc29&hm=521b3815da1eec5e8464842c017413340cec396d633d238e439e6433682dc643&=&format=webp&quality=lossless";
+
 export async function sendSyncNotification(
   client: Client,
   discordId: string,
@@ -140,7 +146,7 @@ function createSyncEmbed(
       embedData.fields = [
         {
           name: "Próximos Passos",
-          value: "Você pode renovar sua assinatura a qualquer momento."
+          value: "Você pode [renovar sua assinatura](https://lsoptimizer.com/checkout) a qualquer momento."
         }
       ];
       break;
@@ -162,7 +168,7 @@ function createSyncEmbed(
     .setDescription(embedData.description)
     .setFooter({
       text: "LS Optimizer • Sincronização",
-      iconURL: "https://cdn.discordapp.com/app-icons/1231234567890123456/a_1234567890abcdef1234567890abcdef.gif"
+      iconURL: LOGO_URL
     })
     .setTimestamp();
 

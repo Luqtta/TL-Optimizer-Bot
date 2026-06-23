@@ -13,22 +13,22 @@ function createQaEmbed() {
     .setTitle("🚀 LS Optimizer - Performance & Game Boost")
     .setDescription(
       [
-        "LS Optimizer e um aplicativo focado em melhorar o desempenho do seu PC e a estabilidade dos jogos, aplicando otimizacoes automaticas de sistema e ajustes inteligentes de performance.",
+        "LS Optimizer é um aplicativo focado em melhorar o desempenho do seu PC e a estabilidade dos jogos, aplicando otimizações automáticas de sistema e ajustes inteligentes de performance.",
         "",
         "⚡ Como funciona:",
         "",
         "• \"Analisa seu sistema automaticamente\"",
-        "• \"Aplica otimizacoes seguras em tempo real\"",
+        "• \"Aplica otimizações seguras em tempo real\"",
         "• \"Ajusta recursos para priorizar jogos e apps pesados\"",
-        "• \"Mantem estabilidade e reduz travamentos\"",
+        "• \"Mantém estabilidade e reduz travamentos\"",
         "",
         "🎮 Ideal para:",
         "Jogadores que querem mais FPS, menos stutter e melhor resposta do sistema sem precisar mexer manualmente no Windows.",
         "",
         "🌐 Site https://ls-optimizer-web.vercel.app",
-        "💰 Plano mensal em promocao: R$10 (antes R$15)",
+        "💰 Plano mensal em promoção: R$10 (antes R$15)",
         "",
-        "🔄 Atualizacoes constantes e melhorias automaticas"
+        "🔄 Atualizações constantes e melhorias automáticas"
       ].join("\n")
     );
 }
@@ -36,13 +36,13 @@ function createQaEmbed() {
 export const qaCommand = {
   data: new SlashCommandBuilder()
     .setName("qa")
-    .setDescription("Envia a mensagem de apresentacao do LS Optimizer.")
+    .setDescription("Envia a mensagem de apresentação do LS Optimizer.")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .setDMPermission(false)
     .addChannelOption((option) =>
       option
         .setName("canal")
-        .setDescription("Canal onde a mensagem sera enviada.")
+        .setDescription("Canal onde a mensagem será enviada.")
         .addChannelTypes(ChannelType.GuildText)
         .setRequired(false)
     ),
@@ -54,14 +54,14 @@ export const qaCommand = {
 
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
       await interaction.editReply({
-        content: "Voce nao tem permissao para usar esse comando."
+        content: "Você não tem permissão para usar esse comando."
       });
       return;
     }
 
     if (!interaction.guild) {
       await interaction.editReply({
-        content: "Esse comando so pode ser usado em servidores."
+        content: "Esse comando só pode ser usado em servidores."
       });
       return;
     }
@@ -71,7 +71,7 @@ export const qaCommand = {
 
     if (!targetChannel || targetChannel.type !== ChannelType.GuildText) {
       await interaction.editReply({
-        content: "Selecione um canal de texto valido."
+        content: "Selecione um canal de texto válido."
       });
       return;
     }

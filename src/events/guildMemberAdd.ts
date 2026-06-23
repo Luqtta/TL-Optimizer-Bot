@@ -232,19 +232,20 @@ async function sendWelcomeDm(member: GuildMember) {
   const welcomeDmEmbed = new EmbedBuilder()
     .setColor("#ff2d2d")
     .setTitle("Boas-vindas ao LS OPTIMIZER")
+    .setThumbnail(member.client.user?.displayAvatarURL({ size: 256 }) ?? null)
     .setDescription(
       [
-        "O LS OPTIMIZER e uma plataforma de otimizacao para melhorar desempenho e experiencia no seu uso diario.",
+        "O LS OPTIMIZER é uma plataforma de otimização para melhorar desempenho e experiência no seu uso diário.",
         "",
         "**Como funciona**",
-        "Voce acessa os recursos da plataforma conforme o plano ativo da sua conta.",
+        "Você acessa os recursos da plataforma conforme o plano ativo da sua conta.",
         "",
         "**Como assinar**",
         "Acesse o site oficial do LS OPTIMIZER, escolha seu plano e finalize a assinatura.",
         "",
-        "**Ja e assinante?**",
+        "**Já é assinante?**",
         "Use o comando `/vincular` no servidor para conectar sua conta.",
-        "Depois da vinculacao, voce recebe o cargo do seu plano e beneficios exclusivos automaticamente."
+        "Depois da vinculação, você recebe o cargo do seu plano e benefícios exclusivos automaticamente."
       ].join("\n")
     )
     .setFooter({

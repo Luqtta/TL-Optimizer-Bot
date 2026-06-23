@@ -33,7 +33,7 @@ function createApresentacaoEmbed() {
         "",
         "🆓 **7 dias grátis — sem precisar de cartão!**",
         "",
-        "💰 **Planos a partir de R$15/mês**",
+        "💰 **Planos a partir de R$25/mês**",
         "",
         "**Leia as regras** antes de participar e aproveite tudo que o servidor tem a oferecer!",
         "",

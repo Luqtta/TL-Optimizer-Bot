@@ -81,6 +81,21 @@ export async function messageCreateEvent(message: Message) {
 
     if (isAdmin || isModerator) return;
 
+    // Canal/categoria de divulgação: convites de Discord são liberados aqui.
+    // Funciona tanto se SHARE_CATEGORY_ID for uma categoria (cobre os canais
+    // dentro dela) quanto se for o próprio canal.
+    const shareCategoryId = process.env.SHARE_CATEGORY_ID;
+    const channelParentId =
+      "parentId" in message.channel ? message.channel.parentId : null;
+
+    if (
+      shareCategoryId &&
+      (message.channel.id === shareCategoryId ||
+        channelParentId === shareCategoryId)
+    ) {
+      return;
+    }
+
     if (!inviteRegex.test(message.content)) return;
 
     await message.delete().catch(() => {});

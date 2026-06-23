@@ -18,6 +18,7 @@ const RECOMMENDED: Record<string, string> = {
   GITHUB_WEBHOOK_SECRET: "validação do webhook do GitHub",
   FEATURE_CHANNEL_ID: "canal de releases/atualizações",
   DISCORD_SYNC_LOG_CHANNEL_ID: "canal de logs de sincronização",
+  SHARE_CATEGORY_ID: "categoria/canal de divulgação (libera convites de Discord)",
   LS_API_URL: "API do LS Optimizer (vínculo e reconciliação)",
   DISCORD_BOT_API_KEY: "autenticação na API do LS Optimizer"
 };

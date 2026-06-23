@@ -34,22 +34,6 @@ export function registerLsOptimizerWebhookRoutes(app: Express, client: Client) {
       const timestamp = req.headers["x-ls-timestamp"];
       const secret = process.env.LS_WEBHOOK_SECRET;
 
-      // LOG TEMPORÁRIO (remover depois): comparar byte a byte o que o bot
-      // recebeu/calculou com o que o backend enviou.
-      console.log("[WEBHOOK-IN]", {
-        ts: timestamp,
-        sigRecv: signature,
-        bodyLen: req.rawBody ? req.rawBody.length : "SEM rawBody",
-        body: req.rawBody ? req.rawBody.toString() : null,
-        expected:
-          req.rawBody && secret && timestamp
-            ? crypto
-                .createHmac("sha256", secret)
-                .update(`${timestamp}:${req.rawBody.toString()}`)
-                .digest("hex")
-            : null
-      });
-
       if (!signature || !timestamp || !secret) {
         await logWebhookAction(client, {
           event: "WEBHOOK_INVALID",
@@ -339,30 +323,30 @@ async function handleUpgraded(
   client: Client,
   event: WebhookEvent
 ): Promise<void> {
-  const user = getLinkedUserByEmail(event.email);
+  const newPlan = (event.newPlan || "FREE") as "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE";
 
-  if (!user) {
-    throw new Error(`Usuário não encontrado: ${event.email}`);
-  }
-
-  // Sincronizar roles
+  // Reconcilia os cargos pelo discordId do payload (fonte da verdade):
+  // adiciona o cargo do newPlan e remove os outros dois de assinatura.
   await syncUserRolesInAllGuilds(
     client,
     event.discordId,
-    event.newPlan || "FREE",
+    newPlan,
     event.previousPlan
   );
 
-  // Atualizar banco de dados
-  updateLinkedUser(event.discordId, {
-    plan: (event.newPlan || "FREE") as "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE",
-    status: "ACTIVE"
+  // UPSERT do registro local pelo discordId — não exige vínculo prévio.
+  addLinkedUser({
+    discordId: event.discordId,
+    email: event.email,
+    plan: newPlan,
+    status: "ACTIVE",
+    updatedAt: event.timestamp
   });
 
   // Enviar DM
   await sendSyncNotification(client, event.discordId, "UPGRADED", {
     previousPlan: (event.previousPlan || "FREE") as string,
-    newPlan: (event.newPlan || "FREE") as string
+    newPlan
   });
 
   console.log(
@@ -374,30 +358,29 @@ async function handleDowngraded(
   client: Client,
   event: WebhookEvent
 ): Promise<void> {
-  const user = getLinkedUserByEmail(event.email);
+  const newPlan = (event.newPlan || "FREE") as "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE";
 
-  if (!user) {
-    throw new Error(`Usuário não encontrado: ${event.email}`);
-  }
-
-  // Sincronizar roles
+  // Reconcilia os cargos pelo discordId do payload (fonte da verdade).
   await syncUserRolesInAllGuilds(
     client,
     event.discordId,
-    event.newPlan || "FREE",
+    newPlan,
     event.previousPlan
   );
 
-  // Atualizar banco de dados
-  updateLinkedUser(event.discordId, {
-    plan: (event.newPlan || "FREE") as "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE",
-    status: "ACTIVE"
+  // UPSERT do registro local pelo discordId — não exige vínculo prévio.
+  addLinkedUser({
+    discordId: event.discordId,
+    email: event.email,
+    plan: newPlan,
+    status: "ACTIVE",
+    updatedAt: event.timestamp
   });
 
   // Enviar DM
   await sendSyncNotification(client, event.discordId, "DOWNGRADED", {
     previousPlan: (event.previousPlan || "FREE") as string,
-    newPlan: (event.newPlan || "FREE") as string
+    newPlan
   });
 
   console.log(
@@ -409,27 +392,25 @@ async function handleRenewed(
   client: Client,
   event: WebhookEvent
 ): Promise<void> {
+  // Registro local é opcional (fallback do plano); a fonte da verdade é o payload.
   const user = getLinkedUserByEmail(event.email);
+  const plan = (event.newPlan || user?.plan || "FREE") as "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE";
 
-  if (!user) {
-    throw new Error(`Usuário não encontrado: ${event.email}`);
-  }
+  // Reconcilia os cargos pelo discordId do payload.
+  await syncUserRolesInAllGuilds(client, event.discordId, plan);
 
-  // Sincronizar roles
-  await syncUserRolesInAllGuilds(
-    client,
-    event.discordId,
-    (event.newPlan || user.plan) as "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE"
-  );
-
-  // Atualizar banco de dados
-  updateLinkedUser(event.discordId, {
-    status: "ACTIVE"
+  // UPSERT do registro local pelo discordId.
+  addLinkedUser({
+    discordId: event.discordId,
+    email: event.email,
+    plan,
+    status: "ACTIVE",
+    updatedAt: event.timestamp
   });
 
   // Enviar DM
   await sendSyncNotification(client, event.discordId, "RENEWED", {
-    plan: (event.newPlan || user.plan) as string
+    plan: plan as string
   });
 
   console.log(`[WEBHOOK] Assinatura de ${event.discordId} renovada.`);
@@ -439,18 +420,13 @@ async function handleCanceled(
   client: Client,
   event: WebhookEvent
 ): Promise<void> {
-  const user = getLinkedUserByEmail(event.email);
-
-  if (!user) {
-    throw new Error(`Usuário não encontrado: ${event.email}`);
-  }
-
-  // Atualizar banco de dados
+  // Cancelamento NÃO remove cargo (acesso vale até o vencimento). Atualiza o
+  // status local se o registro existir; se não, é no-op (sem erro).
   updateLinkedUser(event.discordId, {
     status: "CANCELED"
   });
 
-  // Enviar DM (não remove cargo, apenas avisa)
+  // Enviar DM (apenas avisa)
   await sendSyncNotification(client, event.discordId, "CANCELED");
 
   console.log(`[WEBHOOK] Assinatura de ${event.discordId} cancelada.`);
@@ -460,27 +436,25 @@ async function handleReactivated(
   client: Client,
   event: WebhookEvent
 ): Promise<void> {
+  // Registro local é opcional (fallback do plano); a fonte da verdade é o payload.
   const user = getLinkedUserByEmail(event.email);
+  const plan = (event.newPlan || user?.plan || "FREE") as "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE";
 
-  if (!user) {
-    throw new Error(`Usuário não encontrado: ${event.email}`);
-  }
+  // Reconcilia os cargos pelo discordId do payload.
+  await syncUserRolesInAllGuilds(client, event.discordId, plan);
 
-  // Sincronizar roles
-  await syncUserRolesInAllGuilds(
-    client,
-    event.discordId,
-    (event.newPlan || user.plan) as "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE"
-  );
-
-  // Atualizar banco de dados
-  updateLinkedUser(event.discordId, {
-    status: "ACTIVE"
+  // UPSERT do registro local pelo discordId.
+  addLinkedUser({
+    discordId: event.discordId,
+    email: event.email,
+    plan,
+    status: "ACTIVE",
+    updatedAt: event.timestamp
   });
 
   // Enviar DM
   await sendSyncNotification(client, event.discordId, "REACTIVATED", {
-    plan: (event.newPlan || user.plan) as string
+    plan: plan as string
   });
 
   console.log(`[WEBHOOK] Assinatura de ${event.discordId} reativada.`);
@@ -490,19 +464,16 @@ async function handleExpired(
   client: Client,
   event: WebhookEvent
 ): Promise<void> {
-  const user = getLinkedUserByEmail(event.email);
-
-  if (!user) {
-    throw new Error(`Usuário não encontrado: ${event.email}`);
-  }
-
-  // Remover cargos
+  // Remove os 3 cargos de assinatura (plano FREE) pelo discordId do payload.
   await syncUserRolesInAllGuilds(client, event.discordId, "FREE");
 
-  // Atualizar banco de dados
-  updateLinkedUser(event.discordId, {
+  // UPSERT local — marca como expirado mesmo sem vínculo prévio.
+  addLinkedUser({
+    discordId: event.discordId,
+    email: event.email,
     plan: "FREE",
-    status: "EXPIRED"
+    status: "EXPIRED",
+    updatedAt: event.timestamp
   });
 
   // Enviar DM
@@ -515,16 +486,10 @@ async function handleRefunded(
   client: Client,
   event: WebhookEvent
 ): Promise<void> {
-  const user = getLinkedUserByEmail(event.email);
-
-  if (!user) {
-    throw new Error(`Usuário não encontrado: ${event.email}`);
-  }
-
-  // Remover cargos
+  // Remove os 3 cargos de assinatura pelo discordId do payload.
   await syncUserRolesInAllGuilds(client, event.discordId, "FREE");
 
-  // Remover do banco de dados
+  // Remove o registro local se existir (no-op se não existir).
   removeLinkedUser(event.discordId);
 
   // Enviar DM

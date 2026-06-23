@@ -66,6 +66,17 @@ export function registerLsOptimizerWebhookRoutes(app: Express, client: Client) {
         .digest("hex");
 
       if (!timingSafeEqual(signature, expectedSignature)) {
+        // DEBUG TEMPORÁRIO (remover após resolver o 401): imprime o que o bot
+        // recebeu e calculou, para comparar contra o log do backend e localizar
+        // a divergência (timestamp do header, raw body exato, payload assinado e
+        // as duas assinaturas).
+        console.error("[WEBHOOK][DEBUG] Assinatura inválida:", {
+          timestampHeader: timestamp,
+          rawBody: req.rawBody?.toString(),
+          payloadAssinado: payload,
+          expectedSignature,
+          receivedSignature: signature
+        });
         await logWebhookAction(client, {
           event: "WEBHOOK_INVALID",
           reason: "Assinatura HMAC inválida",

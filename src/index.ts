@@ -1,7 +1,8 @@
 import {
   ActivityType,
   Client,
-  GatewayIntentBits
+  GatewayIntentBits,
+  Options
 } from "discord.js";
 
 import type {
@@ -41,7 +42,22 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.DirectMessages,
     GatewayIntentBits.MessageContent
-  ]
+  ],
+  // Limita a cache de mensagens — maior fonte de crescimento de memória com a
+  // intent MessageContent. O bot age na mensagem no próprio evento e busca
+  // transcrições de ticket via API, então não depende de cache longa.
+  makeCache: Options.cacheWithLimits({
+    ...Options.DefaultMakeCacheSettings,
+    MessageManager: 50
+  }),
+  // Além do sweeper padrão (threads), varre mensagens antigas periodicamente.
+  sweepers: {
+    ...Options.DefaultSweeperSettings,
+    messages: {
+      interval: 3600,
+      lifetime: 1800
+    }
+  }
 });
 
 client.once("clientReady", () => {

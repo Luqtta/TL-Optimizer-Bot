@@ -41,6 +41,16 @@ export async function syncUserRoles(
     // Sinaliza que este membro está sendo sincronizado pelo bot agora.
     botManagedSyncs.set(member.id, Date.now() + BOT_SYNC_WINDOW_MS);
 
+    // Limpeza proativa para o Map não crescer indefinidamente: agenda a remoção
+    // após a janela, mas só remove se a entrada atual já expirou (não apaga uma
+    // marcação renovada por um sync mais recente).
+    setTimeout(() => {
+      const expiry = botManagedSyncs.get(member.id);
+      if (expiry !== undefined && Date.now() >= expiry) {
+        botManagedSyncs.delete(member.id);
+      }
+    }, BOT_SYNC_WINDOW_MS + 1000).unref();
+
     const monthlyRoleId = process.env.ROLE_MONTHLY_ID;
     const yearlyRoleId = process.env.ROLE_YEARLY_ID;
     const lifetimeRoleId = process.env.ROLE_LIFETIME_ID;

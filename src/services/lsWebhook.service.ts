@@ -34,6 +34,22 @@ export function registerLsOptimizerWebhookRoutes(app: Express, client: Client) {
       const timestamp = req.headers["x-ls-timestamp"];
       const secret = process.env.LS_WEBHOOK_SECRET;
 
+      // LOG TEMPORÁRIO (remover depois): comparar byte a byte o que o bot
+      // recebeu/calculou com o que o backend enviou.
+      console.log("[WEBHOOK-IN]", {
+        ts: timestamp,
+        sigRecv: signature,
+        bodyLen: req.rawBody ? req.rawBody.length : "SEM rawBody",
+        body: req.rawBody ? req.rawBody.toString() : null,
+        expected:
+          req.rawBody && secret && timestamp
+            ? crypto
+                .createHmac("sha256", secret)
+                .update(`${timestamp}:${req.rawBody.toString()}`)
+                .digest("hex")
+            : null
+      });
+
       if (!signature || !timestamp || !secret) {
         await logWebhookAction(client, {
           event: "WEBHOOK_INVALID",

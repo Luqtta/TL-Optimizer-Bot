@@ -6,7 +6,6 @@ import {
 import { confirmDiscordCode } from "../services/lsApi.service.js";
 import { addLinkedUser } from "../services/database.service.js";
 import { syncUserRolesInAllGuilds } from "../services/sync.service.js";
-import { sendSyncNotification } from "../services/dm.service.js";
 
 export const codigoCommand = {
   data: new SlashCommandBuilder()
@@ -73,13 +72,9 @@ export const codigoCommand = {
       });
 
       /*
-       * Enviar DM de notificação
+       * NÃO mandar o DM "Conta Vinculada" aqui: o confirmDiscordCode acima dispara o webhook LINKED
+       * no backend, e o handleLinked (lsWebhook.service) já envia esse DM. Mandar aqui duplicava.
        */
-      await sendSyncNotification(
-        interaction.client,
-        interaction.user.id,
-        "LINKED"
-      );
 
       await interaction.reply({
         content:

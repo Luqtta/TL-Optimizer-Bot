@@ -136,8 +136,8 @@ export async function guildMemberAddEvent(member: GuildMember) {
     ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Barra vermelha
-    ctx.fillStyle = "#ff2d2d";
+    // Barra azul
+    ctx.fillStyle = "#3b82f6";
     ctx.fillRect(0, 0, 18, canvas.height);
 
     // Avatar
@@ -162,7 +162,7 @@ export async function guildMemberAddEvent(member: GuildMember) {
     // Borda avatar
     ctx.beginPath();
     ctx.arc(220, 200, 95, 0, Math.PI * 2, true);
-    ctx.strokeStyle = "#ff2d2d";
+    ctx.strokeStyle = "#3b82f6";
     ctx.lineWidth = 6;
     ctx.stroke();
 
@@ -171,14 +171,14 @@ export async function guildMemberAddEvent(member: GuildMember) {
     ctx.font = `bold 52px ${FONT_STACK}`;
     ctx.fillText("BEM-VINDO", 360, 150);
 
-    ctx.fillStyle = "#ff2d2d";
+    ctx.fillStyle = "#3b82f6";
     ctx.font = `bold 42px ${FONT_STACK}`;
     ctx.fillText(truncateName(member.user.username), 360, 210);
 
     ctx.fillStyle = "#d1d5db";
     ctx.font = `28px ${FONT_STACK}`;
     ctx.fillText(
-      "ao servidor oficial do LS Optimizer",
+      "ao servidor oficial do TL Optimizer",
       360,
       270
     );
@@ -201,9 +201,9 @@ export async function guildMemberAddEvent(member: GuildMember) {
 
     // Embed
     const embed = new EmbedBuilder()
-      .setColor("#ff2d2d")
+      .setColor("#3b82f6")
       .setDescription(
-        `👋 Bem-vindo ${member.user} ao servidor oficial do LS Optimizer.`
+        `👋 Bem-vindo ${member.user} ao servidor oficial do TL Optimizer.`
       )
       .setImage("attachment://welcome.png")
       .setTimestamp();
@@ -230,18 +230,18 @@ export async function guildMemberAddEvent(member: GuildMember) {
 
 async function sendWelcomeDm(member: GuildMember) {
   const welcomeDmEmbed = new EmbedBuilder()
-    .setColor("#ff2d2d")
-    .setTitle("Boas-vindas ao LS OPTIMIZER")
+    .setColor("#3b82f6")
+    .setTitle("Boas-vindas ao TL OPTIMIZER")
     .setThumbnail(member.client.user?.displayAvatarURL({ size: 256 }) ?? null)
     .setDescription(
       [
-        "O LS OPTIMIZER é uma plataforma de otimização para melhorar desempenho e experiência no seu uso diário.",
+        "O TL OPTIMIZER é uma plataforma de otimização para melhorar desempenho e experiência no seu uso diário.",
         "",
         "**Como funciona**",
         "Você acessa os recursos da plataforma conforme o plano ativo da sua conta.",
         "",
         "**Como assinar**",
-        "Acesse o site oficial do LS OPTIMIZER, escolha seu plano e finalize a assinatura.",
+        "Acesse o site oficial do TL OPTIMIZER, escolha seu plano e finalize a assinatura.",
         "",
         "**Já é assinante?**",
         "Use o comando `/vincular` no servidor para conectar sua conta.",

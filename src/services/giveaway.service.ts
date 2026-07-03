@@ -163,7 +163,7 @@ export async function endGiveaway(
 
     if (participants.length < giveaway.minParticipants) {
       const canceledEmbed = new EmbedBuilder()
-        .setColor("#CC0000")
+        .setColor("#3b82f6")
         .setTitle("🚫 SORTEIO CANCELADO")
         .setDescription(
           [
@@ -189,7 +189,7 @@ export async function endGiveaway(
     const winnerMentions = winners.map((user) => `<@${user.id}>`);
 
     const resultEmbed = new EmbedBuilder()
-      .setColor("#CC0000")
+      .setColor("#3b82f6")
       .setTitle("🏆 SORTEIO ENCERRADO")
       .setDescription(
         [
@@ -201,7 +201,7 @@ export async function endGiveaway(
           `Parabéns! 🎉 Total de participantes: **${participants.length}**`
         ].join("\n")
       )
-      .setFooter({ text: "LS Optimizer • Sorteios" })
+      .setFooter({ text: "TL Optimizer • Sorteios" })
       .setTimestamp();
 
     await textChannel.send({

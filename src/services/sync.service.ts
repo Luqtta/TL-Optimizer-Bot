@@ -204,7 +204,7 @@ function createLogEmbed(details: {
       }
     )
     .setFooter({
-      text: "LS Optimizer • Sincronização"
+      text: "TL Optimizer • Sincronização"
     })
     .setTimestamp();
 

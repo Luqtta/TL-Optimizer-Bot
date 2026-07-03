@@ -52,7 +52,7 @@ export async function handleTicketButton(interaction: ButtonInteraction) {
 
     const emailInput = new TextInputBuilder()
       .setCustomId("ticket_email")
-      .setLabel("Email da conta LS Optimizer")
+      .setLabel("Email da conta TL Optimizer")
       .setPlaceholder("Ex: seuemail@gmail.com")
       .setStyle(TextInputStyle.Short)
       .setRequired(false)
@@ -170,7 +170,7 @@ export async function handleTicketModal(interaction: ModalSubmitInteraction) {
   });
 
   const embed = new EmbedBuilder()
-    .setColor("#ff2d2d")
+    .setColor("#3b82f6")
     .setTitle("Ticket aberto")
     .setDescription(
       [
@@ -191,7 +191,7 @@ export async function handleTicketModal(interaction: ModalSubmitInteraction) {
       ].join("\n")
     )
     .setFooter({
-      text: "LS Optimizer • Suporte"
+      text: "TL Optimizer • Suporte"
     })
     .setTimestamp();
 
@@ -265,7 +265,7 @@ async function closeTicket(interaction: ButtonInteraction) {
 
   if (logChannel && logChannel.type === ChannelType.GuildText) {
     const embed = new EmbedBuilder()
-      .setColor("#ff2d2d")
+      .setColor("#3b82f6")
       .setTitle("Ticket fechado")
       .addFields(
         {

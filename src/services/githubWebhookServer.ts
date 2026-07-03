@@ -69,7 +69,7 @@ export function registerGithubWebhookRoutes(app: Express, client: Client) {
       }
 
       const embed = new EmbedBuilder()
-        .setColor("#ff2d2d")
+        .setColor("#3b82f6")
         .setTitle(`Nova atualização • ${release.name}`)
         .setURL(release.html_url)
         .setDescription(
@@ -89,7 +89,7 @@ export function registerGithubWebhookRoutes(app: Express, client: Client) {
           }
         )
         .setFooter({
-          text: "LS Optimizer • GitHub Releases"
+          text: "TL Optimizer • GitHub Releases"
         })
         .setTimestamp();
 

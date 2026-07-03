@@ -51,11 +51,11 @@ export const ticketCommand = {
     }
 
     const embed = new EmbedBuilder()
-      .setColor("#ff2d2d")
-      .setTitle("Suporte LS Optimizer")
+      .setColor("#3b82f6")
+      .setTitle("Suporte TL Optimizer")
       .setDescription(
         [
-          "Precisa de ajuda com o LS Optimizer?",
+          "Precisa de ajuda com o TL Optimizer?",
           "",
           "Abra um ticket para falar diretamente com a equipe.",
           "",
@@ -73,7 +73,7 @@ export const ticketCommand = {
         "https://media.discordapp.net/attachments/1504995651308621941/1516952826037796977/LS_Optimizer_Suporte_Banner.png?ex=6a3483e9&is=6a333269&hm=f4f9c8793f38d356c3696b8f569a3159f0341730debd5103b35e388370cce1e9&=&format=webp&quality=lossless"
       )
       .setFooter({
-        text: "LS Optimizer • Sistema de suporte"
+        text: "TL Optimizer • Sistema de suporte"
       })
       .setTimestamp();
 

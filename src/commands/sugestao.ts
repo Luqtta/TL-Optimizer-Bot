@@ -10,7 +10,7 @@ const CHANNEL_ID = "1505272626128355520";
 export const sugestaoCommand = {
   data: new SlashCommandBuilder()
     .setName("sugestao")
-    .setDescription("Envie uma sugestão para o LS Optimizer.")
+    .setDescription("Envie uma sugestão para o TL Optimizer.")
     .addStringOption(option =>
       option
         .setName("mensagem")
@@ -33,7 +33,7 @@ export const sugestaoCommand = {
     }
 
     const embed = new EmbedBuilder()
-      .setColor("#ff2d2d")
+      .setColor("#3b82f6")
       .setAuthor({
         name: interaction.user.username,
         iconURL: interaction.user.displayAvatarURL()

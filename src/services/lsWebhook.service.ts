@@ -551,7 +551,7 @@ async function logWebhookAction(
         }
       )
       .setFooter({
-        text: "LS Optimizer • Webhook"
+        text: "TL Optimizer • Webhook"
       })
       .setTimestamp();
 

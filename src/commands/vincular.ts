@@ -8,7 +8,7 @@ import { requestDiscordLink } from "../services/lsApi.service.js";
 export const vincularCommand = {
   data: new SlashCommandBuilder()
     .setName("vincular")
-    .setDescription("Vincule sua conta LS Optimizer.")
+    .setDescription("Vincule sua conta TL Optimizer.")
     .setDMPermission(true)
     .addStringOption(option =>
       option

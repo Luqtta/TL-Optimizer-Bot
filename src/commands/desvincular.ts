@@ -10,7 +10,7 @@ export const desvincularCommand = {
   data: new SlashCommandBuilder()
     .setName("desvincular")
     .setDescription(
-      "Desvincule sua conta LS Optimizer."
+      "Desvincule sua conta TL Optimizer."
     )
     .setDMPermission(true),
 

@@ -34,7 +34,7 @@ async function handleCriar(interaction: ChatInputCommandInteraction) {
   const endUnix = Math.floor(endAt / 1000);
 
   const embed = new EmbedBuilder()
-    .setColor("#CC0000")
+    .setColor("#3b82f6")
     .setTitle("🎉 SORTEIO")
     .setDescription(
       [
@@ -145,7 +145,7 @@ export const sorteioCommand = {
         .addStringOption((option) =>
           option
             .setName("premio")
-            .setDescription("Descrição do prêmio (ex: 1x Key Mensal LS Optimizer).")
+            .setDescription("Descrição do prêmio (ex: 1x Key Mensal TL Optimizer).")
             .setRequired(true)
             .setMaxLength(200)
         )

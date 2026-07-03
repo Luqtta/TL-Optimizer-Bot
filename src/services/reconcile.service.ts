@@ -283,7 +283,7 @@ async function notifyReconcileComplete(
         }
       )
       .setFooter({
-        text: "LS Optimizer • Reconciliação Automática"
+        text: "TL Optimizer • Reconciliação Automática"
       })
       .setTimestamp();
 
@@ -315,7 +315,7 @@ async function notifyReconcileError(
       .setTitle("❌ Erro na Reconciliação")
       .setDescription(error.message)
       .setFooter({
-        text: "LS Optimizer • Reconciliação Automática"
+        text: "TL Optimizer • Reconciliação Automática"
       })
       .setTimestamp();
 

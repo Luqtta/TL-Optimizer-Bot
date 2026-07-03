@@ -23,11 +23,8 @@ const eventColors = {
   REFUNDED: "#C7CEEA" // lavanda
 };
 
-// Logo do LS Optimizer no rodapé das DMs de notificação.
-// ⚠️ ATENÇÃO: URL de anexo do Discord expira (~24h). Para não quebrar, troque
-// depois por um host permanente (ex.: https://lsoptimizer.com/logo.png).
-const LOGO_URL =
-  "https://media.discordapp.net/attachments/1508950013668098078/1517300449252737045/image.png?ex=6a3b0da9&is=6a39bc29&hm=521b3815da1eec5e8464842c017413340cec396d633d238e439e6433682dc643&=&format=webp&quality=lossless";
+// Logo do TL Optimizer no rodapé das DMs de notificação (host permanente no site).
+const LOGO_URL = "https://thelite.com.br/logo-email.png";
 
 export async function sendSyncNotification(
   client: Client,
@@ -80,13 +77,13 @@ function createSyncEmbed(
     case "LINKED":
       embedData.title = "✅ Conta Vinculada";
       embedData.description =
-        "Sua conta Discord foi vinculada com sucesso à LS Optimizer!";
+        "Sua conta Discord foi vinculada com sucesso à TL Optimizer!";
       break;
 
     case "UNLINKED":
       embedData.title = "🔗 Vinculação Removida";
       embedData.description =
-        "Sua conta foi desvinculada de LS Optimizer. Seus cargos premium foram removidos.";
+        "Sua conta foi desvinculada de TL Optimizer. Seus cargos premium foram removidos.";
       break;
 
     case "UPGRADED":
@@ -146,7 +143,7 @@ function createSyncEmbed(
       embedData.fields = [
         {
           name: "Próximos Passos",
-          value: "Você pode [renovar sua assinatura](https://lsoptimizer.com/checkout) a qualquer momento."
+          value: "Você pode [renovar sua assinatura](https://thelite.com.br/checkout) a qualquer momento."
         }
       ];
       break;
@@ -167,7 +164,7 @@ function createSyncEmbed(
     .setTitle(embedData.title)
     .setDescription(embedData.description)
     .setFooter({
-      text: "LS Optimizer • Sincronização",
+      text: "TL Optimizer • Sincronização",
       iconURL: LOGO_URL
     })
     .setTimestamp();

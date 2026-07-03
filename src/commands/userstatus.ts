@@ -63,7 +63,7 @@ export const userStatusCommand = {
           }
         )
         .setFooter({
-          text: "LS Optimizer • Status do Usuário"
+          text: "TL Optimizer • Status do Usuário"
         })
         .setTimestamp();
 

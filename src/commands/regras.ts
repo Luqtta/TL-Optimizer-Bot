@@ -9,7 +9,7 @@ import {
 
 function createRulesEmbed() {
   return new EmbedBuilder()
-    .setColor("#ff2d2d")
+    .setColor("#3b82f6")
     .setTitle("📌 REGRAS DO SERVIDOR")
     .setDescription(
       [
@@ -51,7 +51,7 @@ function createRulesEmbed() {
       ].join("\n")
     )
     .setFooter({
-      text: "LS Optimizer • Regras oficiais do servidor"
+      text: "TL Optimizer • Regras oficiais do servidor"
     })
     .setTimestamp();
 }

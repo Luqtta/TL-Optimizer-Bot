@@ -9,15 +9,15 @@ import {
 
 function createApresentacaoEmbed() {
   return new EmbedBuilder()
-    .setColor("#CC0000")
+    .setColor("#3b82f6")
     .setDescription(
       [
-        "Bem-vindo ao servidor oficial do **LS Optimizer**! <:ls:1517592999716982996>",
+        "Bem-vindo ao servidor oficial do **TL Optimizer**! <:ls:1517592999716982996>",
         "",
         "Aqui você encontra suporte, novidades, atualizações e uma comunidade focada em performance e otimização de PC para games.",
         "",
         "🚀 **Performance & Game Boost para Windows**",
-        "O LS Optimizer é um app desktop focado em melhorar o desempenho do seu PC e a estabilidade nos jogos — de forma automática, simples e segura.",
+        "O TL Optimizer é um app desktop focado em melhorar o desempenho do seu PC e a estabilidade nos jogos — de forma automática, simples e segura.",
         "",
         "⚡ **Como funciona:**",
         "• Analisa e otimiza seu sistema automaticamente",
@@ -31,7 +31,7 @@ function createApresentacaoEmbed() {
         "🧹 **Limpeza automática:**",
         "Mesmo fora dos jogos, o app limpa arquivos temporários e libera memória em intervalos configuráveis — sem você precisar fazer nada.",
         "",
-        "🆓 **7 dias grátis — sem precisar de cartão!**",
+        "🆓 **Comece grátis — crie sua conta e use o app sem pagar nada!**",
         "",
         "💰 **Planos a partir de R$25/mês**",
         "",
@@ -42,7 +42,7 @@ function createApresentacaoEmbed() {
         "**MAXIMIZE SEU PC** ⚡",
         "",
         "**Links Úteis**",
-        "<:ls:1517592999716982996> [Site](https://lsoptimizer.com) • <:discord:1517592080308764754> [Discord](https://discord.gg/J9y352CDbz)",
+        "<:ls:1517592999716982996> [Site](https://thelite.com.br) • <:discord:1517592080308764754> [Discord](https://discord.gg/RMWFK5KgTz)",
         "",
         "**Redes Sociais**",
         "<:tiktok:1517592036549591236> [TikTok](https://www.tiktok.com/@lsoptimizer) • <:youtube:1517592095500533952> [YouTube](https://www.youtube.com/@LsOptimizerbr) • <:instagram:1517592064898896053> [Instagram](https://www.instagram.com/lsoptimizer/)"

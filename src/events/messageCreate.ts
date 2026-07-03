@@ -32,7 +32,7 @@ export async function messageCreateEvent(message: Message) {
       await message.delete().catch(() => {});
 
       const embed = new EmbedBuilder()
-        .setColor("#ff2d2d")
+        .setColor("#3b82f6")
         .setAuthor({
           name: message.author.username,
           iconURL: message.author.displayAvatarURL()

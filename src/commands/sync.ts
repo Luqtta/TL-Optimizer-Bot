@@ -91,7 +91,7 @@ export const syncCommand = {
           }
         )
         .setFooter({
-          text: "LS Optimizer • Sincronização Manual"
+          text: "TL Optimizer • Sincronização Manual"
         })
         .setTimestamp();
 

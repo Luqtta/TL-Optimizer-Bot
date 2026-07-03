@@ -76,7 +76,7 @@ export const statsCommand = {
           }
         )
         .setFooter({
-          text: "LS Optimizer • Estatísticas"
+          text: "TL Optimizer • Estatísticas"
         })
         .setTimestamp();
 

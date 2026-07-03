@@ -109,11 +109,11 @@ client.once("clientReady", () => {
 
   const activities = [
     {
-      name: "LS Optimizer",
+      name: "TL Optimizer",
       type: ActivityType.Playing
     },
     {
-      name: "LS Optimizer",
+      name: "TL Optimizer",
       type: ActivityType.Listening
     },
     {

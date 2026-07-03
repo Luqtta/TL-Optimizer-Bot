@@ -10,10 +10,10 @@ import {
 function createQaEmbed() {
   return new EmbedBuilder()
     .setColor("#0f0f0f")
-    .setTitle("🚀 LS Optimizer - Performance & Game Boost")
+    .setTitle("🚀 TL Optimizer - Performance & Game Boost")
     .setDescription(
       [
-        "LS Optimizer é um aplicativo focado em melhorar o desempenho do seu PC e a estabilidade dos jogos, aplicando otimizações automáticas de sistema e ajustes inteligentes de performance.",
+        "TL Optimizer é um aplicativo focado em melhorar o desempenho do seu PC e a estabilidade dos jogos, aplicando otimizações automáticas de sistema e ajustes inteligentes de performance.",
         "",
         "⚡ Como funciona:",
         "",
@@ -36,7 +36,7 @@ function createQaEmbed() {
 export const qaCommand = {
   data: new SlashCommandBuilder()
     .setName("qa")
-    .setDescription("Envia a mensagem de apresentação do LS Optimizer.")
+    .setDescription("Envia a mensagem de apresentação do TL Optimizer.")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .setDMPermission(false)
     .addChannelOption((option) =>
@@ -85,17 +85,17 @@ export const qaCommand = {
       const webhooks = await textChannel.fetchWebhooks();
 
       let webhook = webhooks.find(
-        (item) => item.name === "LS Optimizer QA" && item.token
+        (item) => item.name === "TL Optimizer QA" && item.token
       );
 
       if (!webhook) {
         webhook = await textChannel.createWebhook({
-          name: "LS Optimizer QA"
+          name: "TL Optimizer QA"
         });
       }
 
       await webhook.send({
-        username: "LS Optimizer - Performance & Game Boost",
+        username: "TL Optimizer - Performance & Game Boost",
         embeds: [embed]
       });
 

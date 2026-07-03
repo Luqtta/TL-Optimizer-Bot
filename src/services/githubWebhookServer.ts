@@ -68,28 +68,19 @@ export function registerGithubWebhookRoutes(app: Express, client: Client) {
         return res.sendStatus(500);
       }
 
+      // Anúncio enxuto: título (sem link), versão e a descrição da release. Nada de
+      // repositório/URL do GitHub — o canal é vitrine de novidades, não de código.
       const embed = new EmbedBuilder()
         .setColor("#3b82f6")
         .setTitle(`Nova atualização • ${release.name}`)
-        .setURL(release.html_url)
         .setDescription(
           release.body?.slice(0, 4000) ||
           "Sem descrição."
         )
-        .addFields(
-          {
-            name: "Versão",
-            value: release.tag_name,
-            inline: true
-          },
-          {
-            name: "Repositório",
-            value: payload.repository.full_name,
-            inline: true
-          }
-        )
-        .setFooter({
-          text: "TL Optimizer • GitHub Releases"
+        .addFields({
+          name: "Versão",
+          value: release.tag_name,
+          inline: true
         })
         .setTimestamp();
 

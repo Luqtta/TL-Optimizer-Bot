@@ -4,7 +4,7 @@ export async function requestDiscordLink(
   discordUsername: string
 ) {
   const response = await fetch(
-    `${process.env.LS_API_URL}/discord/link/request`,
+    `${process.env.TL_API_URL}/discord/link/request`,
     {
       method: "POST",
       headers: {
@@ -36,7 +36,7 @@ export async function confirmDiscordCode(
   code: string
 ) {
   const response = await fetch(
-    `${process.env.LS_API_URL}/discord/link/confirm`,
+    `${process.env.TL_API_URL}/discord/link/confirm`,
     {
       method: "POST",
       headers: {

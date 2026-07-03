@@ -21,7 +21,7 @@ export const desvincularCommand = {
 
     try {
       const response = await fetch(
-        `${process.env.LS_API_URL}/discord/link/unlink`,
+        `${process.env.TL_API_URL}/discord/link/unlink`,
         {
           method: "POST",
           headers: {

@@ -70,7 +70,7 @@ export const ticketCommand = {
         ].join("\n")
       )
       .setImage(
-        "https://media.discordapp.net/attachments/1504995651308621941/1516952826037796977/LS_Optimizer_Suporte_Banner.png?ex=6a3483e9&is=6a333269&hm=f4f9c8793f38d356c3696b8f569a3159f0341730debd5103b35e388370cce1e9&=&format=webp&quality=lossless"
+        "https://media.discordapp.net/attachments/1506355546142539796/1522622754598293804/TL_Suporte_Banner.png?ex=6a492471&is=6a47d2f1&hm=fc4ca950a8115bfb14985d21c920ae93c45d8888b1e8d40f05d951ab8e8deae4&=&format=webp&quality=lossless"
       )
       .setFooter({
         text: "TL Optimizer • Sistema de suporte"

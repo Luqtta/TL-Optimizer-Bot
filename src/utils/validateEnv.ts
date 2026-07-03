@@ -14,13 +14,13 @@ const RECOMMENDED: Record<string, string> = {
   ROLE_MONTHLY_ID: "cargo do plano mensal",
   ROLE_YEARLY_ID: "cargo do plano anual",
   ROLE_LIFETIME_ID: "cargo do plano vitalício",
-  LS_WEBHOOK_SECRET: "validação do webhook do TL Optimizer",
+  TL_WEBHOOK_SECRET: "validação do webhook do TL Optimizer",
   GITHUB_WEBHOOK_SECRET: "validação do webhook do GitHub",
   FEATURE_CHANNEL_ID: "canal de releases/atualizações",
   DISCORD_SYNC_LOG_CHANNEL_ID: "canal de logs de sincronização",
   SHARE_CATEGORY_ID: "categoria/canal de divulgação (libera convites de Discord)",
   SUGGESTION_CHANNEL_ID: "canal de sugestões",
-  LS_API_URL: "API do TL Optimizer (vínculo e reconciliação)",
+  TL_API_URL: "API do TL Optimizer (vínculo e reconciliação)",
   DISCORD_BOT_API_KEY: "autenticação na API do TL Optimizer"
 };
 

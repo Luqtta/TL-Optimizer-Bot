@@ -21,9 +21,9 @@ import {
 
 import { registerGithubWebhookRoutes } from "./services/githubWebhookServer.js";
 import {
-  registerLsOptimizerWebhookRoutes,
+  registerTlWebhookRoutes,
   reprocessPendingWebhookEvents
-} from "./services/lsWebhook.service.js";
+} from "./services/tlWebhook.service.js";
 import { initializeDatabase, closeDatabase } from "./services/database.service.js";
 import { startReconcileScheduler, stopReconcileScheduler } from "./services/reconcile.service.js";
 import { startGiveawayScheduler } from "./services/giveaway.service.js";
@@ -90,7 +90,7 @@ client.once("clientReady", () => {
     });
   });
 
-  registerLsOptimizerWebhookRoutes(app, client);
+  registerTlWebhookRoutes(app, client);
   registerGithubWebhookRoutes(app, client);
 
   const webhookPort = Number(process.env.PORT) || 3001;

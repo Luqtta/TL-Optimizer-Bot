@@ -26,13 +26,13 @@ import type { WebhookEvent, LinkedUser } from "../types/index.js";
 // Set para deduplicação de eventos (últimas 1000)
 const recentEvents = new Set<string>();
 
-export function registerLsOptimizerWebhookRoutes(app: Express, client: Client) {
-  app.post("/webhooks/ls-optimizer", async (req: any, res) => {
+export function registerTlWebhookRoutes(app: Express, client: Client) {
+  app.post("/webhooks/tl-optimizer", async (req: any, res) => {
     try {
       // Validação HMAC timing-safe
       const signature = req.headers["x-ls-signature"];
       const timestamp = req.headers["x-ls-timestamp"];
-      const secret = process.env.LS_WEBHOOK_SECRET;
+      const secret = process.env.TL_WEBHOOK_SECRET;
 
       if (!signature || !timestamp || !secret) {
         await logWebhookAction(client, {

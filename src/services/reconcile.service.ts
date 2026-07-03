@@ -60,7 +60,7 @@ async function fetchLinksPage(
   limit: number
 ): Promise<{ links: BackendLink[]; total: number | null }> {
   const response = await fetch(
-    `${process.env.LS_API_URL}/discord/links?limit=${limit}&offset=${offset}`,
+    `${process.env.TL_API_URL}/discord/links?limit=${limit}&offset=${offset}`,
     {
       method: "GET",
       headers: {

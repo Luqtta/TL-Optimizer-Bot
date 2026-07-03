@@ -3,7 +3,7 @@ import {
   SlashCommandBuilder
 } from "discord.js";
 
-import { requestDiscordLink } from "../services/lsApi.service.js";
+import { requestDiscordLink } from "../services/tlApi.service.js";
 
 export const vincularCommand = {
   data: new SlashCommandBuilder()

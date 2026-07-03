@@ -25,7 +25,7 @@ function createQaEmbed() {
         "🎮 Ideal para:",
         "Jogadores que querem mais FPS, menos stutter e melhor resposta do sistema sem precisar mexer manualmente no Windows.",
         "",
-        "🌐 Site https://ls-optimizer-web.vercel.app",
+        "🌐 Site https://thelite.com.br",
         "💰 Plano mensal em promoção: R$10 (antes R$15)",
         "",
         "🔄 Atualizações constantes e melhorias automáticas"

@@ -3,7 +3,7 @@ import {
   SlashCommandBuilder
 } from "discord.js";
 
-import { confirmDiscordCode } from "../services/lsApi.service.js";
+import { confirmDiscordCode } from "../services/tlApi.service.js";
 import { addLinkedUser } from "../services/database.service.js";
 import { syncUserRolesInAllGuilds } from "../services/sync.service.js";
 
@@ -73,7 +73,7 @@ export const codigoCommand = {
 
       /*
        * NÃO mandar o DM "Conta Vinculada" aqui: o confirmDiscordCode acima dispara o webhook LINKED
-       * no backend, e o handleLinked (lsWebhook.service) já envia esse DM. Mandar aqui duplicava.
+       * no backend, e o handleLinked (tlWebhook.service) já envia esse DM. Mandar aqui duplicava.
        */
 
       await interaction.reply({

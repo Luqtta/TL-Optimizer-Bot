@@ -49,7 +49,7 @@ function createApresentacaoEmbed() {
       ].join("\n")
     )
     .setImage(
-      "https://media.discordapp.net/attachments/1508950013668098078/1517572511347376218/LS_Optimizer_Apresentacao_Banner.png?ex=6a36c509&is=6a357389&hm=b61e3c605451a8d2f7a3a4dcf5cb2d2c9284277f8f46ef2a2b7fcf8786d6edce&=&format=webp&quality=lossless"
+      "https://media.discordapp.net/attachments/1468487286365749281/1522626499944120330/TL_Optimizer_Banner.png?ex=6a4927ee&is=6a47d66e&hm=cf46a1db612b408a467982c13cbfc708cfcc9c88637ad05376892e96a5aa388d&=&format=webp&quality=lossless"
     );
 }
 

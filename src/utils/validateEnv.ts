@@ -19,6 +19,7 @@ const RECOMMENDED: Record<string, string> = {
   FEATURE_CHANNEL_ID: "canal de releases/atualizações",
   DISCORD_SYNC_LOG_CHANNEL_ID: "canal de logs de sincronização",
   SHARE_CATEGORY_ID: "categoria/canal de divulgação (libera convites de Discord)",
+  SUGGESTION_CHANNEL_ID: "canal de sugestões",
   LS_API_URL: "API do TL Optimizer (vínculo e reconciliação)",
   DISCORD_BOT_API_KEY: "autenticação na API do TL Optimizer"
 };

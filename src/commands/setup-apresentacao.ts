@@ -12,7 +12,7 @@ function createApresentacaoEmbed() {
     .setColor("#3b82f6")
     .setDescription(
       [
-        "Bem-vindo ao servidor oficial do **TL Optimizer**! <:ls:1517592999716982996>",
+        "Bem-vindo ao servidor oficial do **TL Optimizer**!",
         "",
         "Aqui você encontra suporte, novidades, atualizações e uma comunidade focada em performance e otimização de PC para games.",
         "",
@@ -37,12 +37,12 @@ function createApresentacaoEmbed() {
         "",
         "**Leia as regras** antes de participar e aproveite tudo que o servidor tem a oferecer!",
         "",
-        "Para suporte, abra um ticket no canal <#1504988115994153050> e nossa equipe te ajuda diretamente.",
+        "Para suporte, abra um ticket no canal <#1522444480785940541> e nossa equipe te ajuda diretamente.",
         "",
         "**MAXIMIZE SEU PC** ⚡",
         "",
         "**Links Úteis**",
-        "<:ls:1517592999716982996> [Site](https://thelite.com.br) • <:discord:1517592080308764754> [Discord](https://discord.gg/QasuSCE6Hj)",
+        "[Site](https://thelite.com.br) • <:discord:1517592080308764754> [Discord](https://discord.gg/QasuSCE6Hj)",
         "",
         "**Redes Sociais**",
         "<:tiktok:1517592036549591236> [TikTok](https://www.tiktok.com/@lsoptimizer) • <:youtube:1517592095500533952> [YouTube](https://www.youtube.com/@LsOptimizerbr) • <:instagram:1517592064898896053> [Instagram](https://www.instagram.com/lsoptimizer/)"

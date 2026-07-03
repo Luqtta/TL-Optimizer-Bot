@@ -42,7 +42,7 @@ function createApresentacaoEmbed() {
         "**MAXIMIZE SEU PC** ⚡",
         "",
         "**Links Úteis**",
-        "[Site](https://thelite.com.br) • <:discord:1517592080308764754> [Discord](https://discord.gg/QasuSCE6Hj)",
+        "🔗 [Site](https://thelite.com.br) • <:discord:1517592080308764754> [Discord](https://discord.gg/QasuSCE6Hj)",
         "",
         "**Redes Sociais**",
         "<:tiktok:1517592036549591236> [TikTok](https://www.tiktok.com/@lsoptimizer) • <:youtube:1517592095500533952> [YouTube](https://www.youtube.com/@LsOptimizerbr) • <:instagram:1517592064898896053> [Instagram](https://www.instagram.com/lsoptimizer/)"

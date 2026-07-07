@@ -29,6 +29,7 @@ export const syncCommand = {
         .setDescription("Plano para atribuir")
         .setRequired(true)
         .addChoices(
+          { name: "Weekly", value: "WEEKLY" },
           { name: "Monthly", value: "MONTHLY" },
           { name: "Yearly", value: "YEARLY" },
           { name: "Lifetime", value: "LIFETIME" },

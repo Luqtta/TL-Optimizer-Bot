@@ -23,6 +23,7 @@ export const statsCommand = {
       const expiredUsers = linkedUsers.filter(u => u.status === "EXPIRED").length;
       const canceledUsers = linkedUsers.filter(u => u.status === "CANCELED").length;
 
+      const weeklyUsers = linkedUsers.filter(u => u.plan === "WEEKLY").length;
       const monthlyUsers = linkedUsers.filter(u => u.plan === "MONTHLY").length;
       const yearlyUsers = linkedUsers.filter(u => u.plan === "YEARLY").length;
       const lifetimeUsers = linkedUsers.filter(u => u.plan === "LIFETIME").length;
@@ -52,6 +53,11 @@ export const statsCommand = {
           {
             name: "Usuários Cancelados",
             value: canceledUsers.toString(),
+            inline: true
+          },
+          {
+            name: "Plano: Weekly",
+            value: weeklyUsers.toString(),
             inline: true
           },
           {

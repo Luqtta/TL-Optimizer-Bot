@@ -1,7 +1,7 @@
 export interface LinkedUser {
   discordId: string;
   email: string;
-  plan: "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE";
+  plan: "WEEKLY" | "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE";
   status: "ACTIVE" | "CANCELED" | "EXPIRED";
   updatedAt: number;
 }

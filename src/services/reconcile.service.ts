@@ -7,7 +7,7 @@ import {
 import { addSyncLog } from "./database.service.js";
 import { syncUserRoles } from "./sync.service.js";
 
-type PlanName = "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE";
+type PlanName = "WEEKLY" | "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE";
 
 interface BackendLink {
   discordId: string;
@@ -92,6 +92,8 @@ async function fetchLinksPage(
 
 function desiredRoleId(plan: PlanName): string | null {
   switch (plan) {
+    case "WEEKLY":
+      return process.env.ROLE_WEEKLY_ID ?? null;
     case "MONTHLY":
       return process.env.ROLE_MONTHLY_ID ?? null;
     case "YEARLY":
@@ -105,6 +107,7 @@ function desiredRoleId(plan: PlanName): string | null {
 
 function planRoleIds(): string[] {
   return [
+    process.env.ROLE_WEEKLY_ID,
     process.env.ROLE_MONTHLY_ID,
     process.env.ROLE_YEARLY_ID,
     process.env.ROLE_LIFETIME_ID

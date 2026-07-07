@@ -22,7 +22,7 @@ export function initializeDatabase(): void {
     CREATE TABLE IF NOT EXISTS linked_users (
       discord_id TEXT PRIMARY KEY,
       email TEXT NOT NULL UNIQUE,
-      plan TEXT NOT NULL CHECK(plan IN ('MONTHLY', 'YEARLY', 'LIFETIME', 'FREE')),
+      plan TEXT NOT NULL,
       status TEXT NOT NULL CHECK(status IN ('ACTIVE', 'CANCELED', 'EXPIRED')) DEFAULT 'ACTIVE',
       updated_at INTEGER NOT NULL,
       created_at INTEGER NOT NULL
@@ -67,6 +67,36 @@ export function initializeDatabase(): void {
     CREATE INDEX IF NOT EXISTS idx_webhook_events_processed ON webhook_events(processed);
     CREATE INDEX IF NOT EXISTS idx_giveaways_status ON giveaways(status);
   `);
+
+  // Migração: bancos antigos têm CHECK(plan IN ('MONTHLY','YEARLY','LIFETIME','FREE')) que rejeita
+  // WEEKLY (plano Semanal). CREATE TABLE IF NOT EXISTS não altera tabela existente, então reconstrói
+  // a linked_users sem o CHECK de plano (os planos vêm do nosso backend confiável; e assim planos
+  // futuros não precisam de migração). Idempotente: só roda se o CHECK antigo ainda estiver lá.
+  try {
+    const tableSql = db
+      .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='linked_users'")
+      .get() as { sql?: string } | undefined;
+    if (tableSql?.sql && tableSql.sql.includes("CHECK(plan IN")) {
+      db.exec(`
+        CREATE TABLE linked_users_new (
+          discord_id TEXT PRIMARY KEY,
+          email TEXT NOT NULL UNIQUE,
+          plan TEXT NOT NULL,
+          status TEXT NOT NULL CHECK(status IN ('ACTIVE', 'CANCELED', 'EXPIRED')) DEFAULT 'ACTIVE',
+          updated_at INTEGER NOT NULL,
+          created_at INTEGER NOT NULL
+        );
+        INSERT INTO linked_users_new (discord_id, email, plan, status, updated_at, created_at)
+          SELECT discord_id, email, plan, status, updated_at, created_at FROM linked_users;
+        DROP TABLE linked_users;
+        ALTER TABLE linked_users_new RENAME TO linked_users;
+        CREATE INDEX IF NOT EXISTS idx_linked_users_email ON linked_users(email);
+      `);
+      console.log("[DATABASE] Migração aplicada: CHECK de plano removido (suporta WEEKLY/planos futuros).");
+    }
+  } catch (error: any) {
+    console.error("[DATABASE] Falha na migração do CHECK de plano:", error.message);
+  }
 
   console.log("[DATABASE] Banco de dados inicializado em:", dbPath);
 }

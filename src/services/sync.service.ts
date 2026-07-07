@@ -51,11 +51,12 @@ export async function syncUserRoles(
       }
     }, BOT_SYNC_WINDOW_MS + 1000).unref();
 
+    const weeklyRoleId = process.env.ROLE_WEEKLY_ID;
     const monthlyRoleId = process.env.ROLE_MONTHLY_ID;
     const yearlyRoleId = process.env.ROLE_YEARLY_ID;
     const lifetimeRoleId = process.env.ROLE_LIFETIME_ID;
 
-    const allRoleIds = [monthlyRoleId, yearlyRoleId, lifetimeRoleId].filter(
+    const allRoleIds = [weeklyRoleId, monthlyRoleId, yearlyRoleId, lifetimeRoleId].filter(
       Boolean
     ) as string[];
 
@@ -64,6 +65,9 @@ export async function syncUserRoles(
     let roleToAdd: string | null = null;
 
     switch (plan) {
+      case "WEEKLY":
+        roleToAdd = weeklyRoleId || null;
+        break;
       case "MONTHLY":
         roleToAdd = monthlyRoleId || null;
         break;

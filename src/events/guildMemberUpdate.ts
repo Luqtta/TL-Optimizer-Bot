@@ -25,6 +25,7 @@ export async function guildMemberUpdateEvent(
 ): Promise<void> {
   try {
     const planRoleIds = {
+      WEEKLY: process.env.ROLE_WEEKLY_ID,
       MONTHLY: process.env.ROLE_MONTHLY_ID,
       YEARLY: process.env.ROLE_YEARLY_ID,
       LIFETIME: process.env.ROLE_LIFETIME_ID
@@ -61,7 +62,7 @@ export async function guildMemberUpdateEvent(
     const expectedRoleId =
       expectedPlan === "FREE"
         ? null
-        : planRoleIds[expectedPlan as "MONTHLY" | "YEARLY" | "LIFETIME"] ?? null;
+        : planRoleIds[expectedPlan as "WEEKLY" | "MONTHLY" | "YEARLY" | "LIFETIME"] ?? null;
 
     const currentManaged = managedIds.filter((id) =>
       newMember.roles.cache.has(id)

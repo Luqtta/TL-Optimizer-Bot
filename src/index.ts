@@ -13,6 +13,7 @@ import dotenv from "dotenv";
 import express from "express";
 
 import { commandMap } from "./commands/index.js";
+import { registerCommands } from "./deploy-commands.js";
 
 import {
   handleTicketButton,
@@ -67,6 +68,11 @@ const client = new Client({
 
 client.once("clientReady", () => {
   console.log(`[DISCORD] Bot online como ${client.user?.tag}`);
+
+  // Registra os slash commands no boot (usa as vars da Railway). Idempotente; não derruba o bot se falhar.
+  registerCommands().catch((error) => {
+    console.error("[DISCORD] Erro ao registrar comandos:", error);
+  });
 
   // Inicializar banco de dados
   initializeDatabase();

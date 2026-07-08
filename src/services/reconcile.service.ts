@@ -59,18 +59,42 @@ async function fetchLinksPage(
   offset: number,
   limit: number
 ): Promise<{ links: BackendLink[]; total: number | null }> {
-  const response = await fetch(
-    `${process.env.TL_API_URL}/discord/links?limit=${limit}&offset=${offset}`,
-    {
-      method: "GET",
-      headers: {
-        "X-Bot-Api-Key": process.env.DISCORD_BOT_API_KEY || ""
-      }
-    }
-  );
+  // Timeout + retry: uma oscilação do backend não pode abortar o ciclo inteiro.
+  let response: Response | undefined;
+  let lastError: any;
 
-  if (!response.ok) {
-    throw new Error(`Backend /discord/links retornou ${response.status}`);
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      response = await fetch(
+        `${process.env.TL_API_URL}/discord/links?limit=${limit}&offset=${offset}`,
+        {
+          method: "GET",
+          headers: {
+            "X-Bot-Api-Key": process.env.DISCORD_BOT_API_KEY || ""
+          },
+          signal: AbortSignal.timeout(15000)
+        }
+      );
+
+      if (response.ok) {
+        break;
+      }
+
+      lastError = new Error(
+        `Backend /discord/links retornou ${response.status}`
+      );
+      response = undefined;
+    } catch (error) {
+      lastError = error;
+    }
+
+    if (attempt < 3) {
+      await new Promise((resolve) => setTimeout(resolve, 2000 * attempt));
+    }
+  }
+
+  if (!response) {
+    throw lastError;
   }
 
   const data = await response.json();

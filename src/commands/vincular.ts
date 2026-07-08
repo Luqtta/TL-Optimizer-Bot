@@ -37,14 +37,6 @@ export const vincularCommand = {
       });
 
       /*
-       * testa se DM esta aberta
-       */
-      await interaction.user.send({
-        content:
-          "Verificando conexão de DM..."
-      });
-
-      /*
        * chama API
        */
       await requestDiscordLink(
@@ -54,19 +46,23 @@ export const vincularCommand = {
       );
 
       /*
-       * envia DM real
+       * envia DM com as instruções; se a DM estiver fechada,
+       * as instruções vão na própria resposta (efêmera)
        */
-      await interaction.user.send({
-        content:
-          `Código enviado para ${email}.\n\nDigite no privado do bot:\n/codigo CODIGO`
-      });
+      let dmSent = true;
+      try {
+        await interaction.user.send({
+          content:
+            `Código enviado para ${email}.\n\nDigite no privado do bot:\n/codigo CODIGO`
+        });
+      } catch {
+        dmSent = false;
+      }
 
-      /*
-       * resposta final da interaction
-       */
       await interaction.editReply({
-        content:
-          "Verificação enviada para sua DM."
+        content: dmSent
+          ? "Verificação enviada para sua DM."
+          : `Código enviado para ${email}.\nSua DM está fechada — use \`/codigo CODIGO\` no privado do bot para confirmar.`
       });
 
     } catch (error: any) {

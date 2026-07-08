@@ -20,6 +20,11 @@ export const desvincularCommand = {
     const shouldBeEphemeral = Boolean(interaction.guildId);
 
     try {
+      // Backend + sync de cargos pode passar de 3s; defer evita "Unknown interaction".
+      await interaction.deferReply({
+        flags: shouldBeEphemeral ? 64 : undefined
+      });
+
       const response = await fetch(
         `${process.env.TL_API_URL}/discord/link/unlink`,
         {
@@ -58,10 +63,9 @@ export const desvincularCommand = {
        */
       removeLinkedUser(interaction.user.id);
 
-      await interaction.reply({
+      await interaction.editReply({
         content:
-          "Sua conta foi desvinculada com sucesso.",
-        flags: shouldBeEphemeral ? 64 : undefined
+          "Sua conta foi desvinculada com sucesso."
       });
 
     } catch (error: any) {
@@ -70,12 +74,17 @@ export const desvincularCommand = {
         error
       );
 
-      await interaction.reply({
-        content:
-          error?.message ||
-          "Erro ao desvincular conta.",
-        flags: shouldBeEphemeral ? 64 : undefined
-      });
+      const content =
+        error?.message || "Erro ao desvincular conta.";
+
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ content });
+      } else {
+        await interaction.reply({
+          content,
+          flags: shouldBeEphemeral ? 64 : undefined
+        });
+      }
     }
   }
 };

@@ -81,7 +81,8 @@ export const ticketCommand = {
       new ButtonBuilder()
         .setCustomId("ticket_open")
         .setLabel("Abrir Ticket")
-        .setStyle(ButtonStyle.Danger)
+        .setEmoji("🎫")
+        .setStyle(ButtonStyle.Primary)
     );
 
     await (channel as TextChannel).send({

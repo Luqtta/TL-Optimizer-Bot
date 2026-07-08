@@ -16,11 +16,13 @@ export async function requestDiscordLink(
         email,
         discordId,
         discordUsername
-      })
+      }),
+      signal: AbortSignal.timeout(15000)
     }
   );
 
-  const data = await response.json();
+  // .catch: um 502 do gateway devolve HTML e o .json() explodiria com erro opaco.
+  const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
     throw new Error(
@@ -47,11 +49,12 @@ export async function confirmDiscordCode(
       body: JSON.stringify({
         discordId,
         code
-      })
+      }),
+      signal: AbortSignal.timeout(15000)
     }
   );
 
-  const data = await response.json();
+  const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
     throw new Error(

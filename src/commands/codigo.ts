@@ -37,6 +37,10 @@ export const codigoCommand = {
         return;
       }
 
+      // A validação no backend + sync de cargos pode passar de 3s;
+      // defer evita "Unknown interaction".
+      await interaction.deferReply({ flags: 64 });
+
       const code = interaction.options.getString(
         "codigo",
         true
@@ -76,21 +80,22 @@ export const codigoCommand = {
        * no backend, e o handleLinked (tlWebhook.service) já envia esse DM. Mandar aqui duplicava.
        */
 
-      await interaction.reply({
+      await interaction.editReply({
         content:
-          `Conta vinculada com sucesso.\nPlano detectado: ${data.plan}`,
-        flags: 64
+          `Conta vinculada com sucesso.\nPlano detectado: ${data.plan}`
       });
 
     } catch (error: any) {
       console.error("[CODIGO] erro:", error);
 
-      await interaction.reply({
-        content:
-          error?.message ||
-          "Código inválido ou expirado.",
-        flags: 64
-      });
+      const content =
+        error?.message || "Código inválido ou expirado.";
+
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ content });
+      } else {
+        await interaction.reply({ content, flags: 64 });
+      }
     }
   }
 };

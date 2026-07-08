@@ -110,122 +110,133 @@ async function loadBackground() {
 }
 
 export async function guildMemberAddEvent(member: GuildMember) {
-  try {
-    const roleId = process.env.AUTO_ROLE_ID!;
-    const channelId = process.env.WELCOME_CHANNEL_ID!;
+  // Cada etapa é independente: falha em uma não impede as outras.
 
-    ensureFontsRegistered();
-
-    await member.roles.add(roleId);
-
-    const channel = member.guild.channels.cache.get(channelId);
-
-    if (!channel || !channel.isTextBased()) {
-      return;
-    }
-
-    const canvas = createCanvas(1200, 400);
-    const ctx = canvas.getContext("2d");
-
-    // Background
-    const background = await loadBackground();
-
-    ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
-
-    // Overlay
-    ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Barra azul
-    ctx.fillStyle = "#3b82f6";
-    ctx.fillRect(0, 0, 18, canvas.height);
-
-    // Avatar
-    const avatar = await loadImage(
-      member.user.displayAvatarURL({
-        extension: "png",
-        size: 512
-      })
-    );
-
-    ctx.save();
-
-    ctx.beginPath();
-    ctx.arc(220, 200, 90, 0, Math.PI * 2, true);
-    ctx.closePath();
-    ctx.clip();
-
-    ctx.drawImage(avatar, 130, 110, 180, 180);
-
-    ctx.restore();
-
-    // Borda avatar
-    ctx.beginPath();
-    ctx.arc(220, 200, 95, 0, Math.PI * 2, true);
-    ctx.strokeStyle = "#3b82f6";
-    ctx.lineWidth = 6;
-    ctx.stroke();
-
-    // Texto
-    ctx.fillStyle = "#ffffff";
-    ctx.font = `bold 52px ${FONT_STACK}`;
-    ctx.fillText("BEM-VINDO", 360, 150);
-
-    ctx.fillStyle = "#3b82f6";
-    ctx.font = `bold 42px ${FONT_STACK}`;
-    ctx.fillText(truncateName(member.user.username), 360, 210);
-
-    ctx.fillStyle = "#d1d5db";
-    ctx.font = `28px ${FONT_STACK}`;
-    ctx.fillText(
-      "ao servidor oficial do TL Optimizer",
-      360,
-      270
-    );
-
-    ctx.fillStyle = "#9ca3af";
-    ctx.font = `22px ${FONT_STACK}`;
-    ctx.fillText(
-      `Membro #${member.guild.memberCount}`,
-      360,
-      330
-    );
-
-    // Exporta imagem
-    const attachment = new AttachmentBuilder(
-      canvas.toBuffer("image/png"),
-      {
-        name: "welcome.png"
-      }
-    );
-
-    // Embed
-    const embed = new EmbedBuilder()
-      .setColor("#3b82f6")
-      .setDescription(
-        `👋 Bem-vindo ${member.user} ao servidor oficial do TL Optimizer.`
-      )
-      .setImage("attachment://welcome.png")
-      .setTimestamp();
-
-    await (channel as TextChannel).send({
-      content: `${member.user}`,
-      embeds: [embed],
-      files: [attachment]
+  // 1. Cargo automático (só se configurado)
+  const roleId = process.env.AUTO_ROLE_ID;
+  if (roleId) {
+    await member.roles.add(roleId).catch((error) => {
+      console.error("[DISCORD] Falha ao dar cargo automático:", error);
     });
-
-    await sendWelcomeDm(member);
-
-    console.log(
-      `[DISCORD] Novo membro: ${member.user.tag}`
-    );
-
-  } catch (error) {
-    console.error(
-      "[DISCORD] Erro no guildMemberAdd:",
-      error
-    );
   }
+
+  // 2. Imagem de boas-vindas no canal
+  try {
+    await sendWelcomeImage(member);
+  } catch (error) {
+    console.error("[DISCORD] Erro ao enviar boas-vindas no canal:", error);
+  }
+
+  // 3. DM de boas-vindas (trata os próprios erros)
+  await sendWelcomeDm(member);
+
+  console.log(`[DISCORD] Novo membro: ${member.user.tag}`);
+}
+
+async function sendWelcomeImage(member: GuildMember) {
+  const channelId = process.env.WELCOME_CHANNEL_ID;
+
+  if (!channelId) {
+    return;
+  }
+
+  ensureFontsRegistered();
+
+  const channel = member.guild.channels.cache.get(channelId);
+
+  if (!channel || !channel.isTextBased()) {
+    return;
+  }
+
+  const canvas = createCanvas(1200, 400);
+  const ctx = canvas.getContext("2d");
+
+  // Background
+  const background = await loadBackground();
+
+  ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+
+  // Overlay
+  ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Barra azul
+  ctx.fillStyle = "#3b82f6";
+  ctx.fillRect(0, 0, 18, canvas.height);
+
+  // Avatar
+  const avatar = await loadImage(
+    member.user.displayAvatarURL({
+      extension: "png",
+      size: 512
+    })
+  );
+
+  ctx.save();
+
+  ctx.beginPath();
+  ctx.arc(220, 200, 90, 0, Math.PI * 2, true);
+  ctx.closePath();
+  ctx.clip();
+
+  ctx.drawImage(avatar, 130, 110, 180, 180);
+
+  ctx.restore();
+
+  // Borda avatar
+  ctx.beginPath();
+  ctx.arc(220, 200, 95, 0, Math.PI * 2, true);
+  ctx.strokeStyle = "#3b82f6";
+  ctx.lineWidth = 6;
+  ctx.stroke();
+
+  // Texto
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `bold 52px ${FONT_STACK}`;
+  ctx.fillText("BEM-VINDO", 360, 150);
+
+  ctx.fillStyle = "#3b82f6";
+  ctx.font = `bold 42px ${FONT_STACK}`;
+  ctx.fillText(truncateName(member.user.username), 360, 210);
+
+  ctx.fillStyle = "#d1d5db";
+  ctx.font = `28px ${FONT_STACK}`;
+  ctx.fillText(
+    "ao servidor oficial do TL Optimizer",
+    360,
+    270
+  );
+
+  ctx.fillStyle = "#9ca3af";
+  ctx.font = `22px ${FONT_STACK}`;
+  ctx.fillText(
+    `Membro #${member.guild.memberCount}`,
+    360,
+    330
+  );
+
+  // Exporta imagem
+  const attachment = new AttachmentBuilder(
+    canvas.toBuffer("image/png"),
+    {
+      name: "welcome.png"
+    }
+  );
+
+  // Embed
+  const embed = new EmbedBuilder()
+    .setColor("#3b82f6")
+    .setDescription(
+      `👋 Bem-vindo ${member.user} ao servidor oficial do TL Optimizer.`
+    )
+    .setImage("attachment://welcome.png")
+    .setTimestamp();
+
+  await (channel as TextChannel).send({
+    content: `${member.user}`,
+    embeds: [embed],
+    files: [attachment]
+  });
 }
 
 async function sendWelcomeDm(member: GuildMember) {

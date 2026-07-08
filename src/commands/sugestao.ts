@@ -5,7 +5,7 @@ import {
   TextChannel
 } from "discord.js";
 
-const CHANNEL_ID = "1505272626128355520";
+const CHANNEL_ID = process.env.SUGGESTION_CHANNEL_ID;
 
 export const sugestaoCommand = {
   data: new SlashCommandBuilder()
@@ -21,7 +21,9 @@ export const sugestaoCommand = {
   async execute(interaction: ChatInputCommandInteraction) {
     const mensagem = interaction.options.getString("mensagem", true);
 
-    const channel = interaction.guild?.channels.cache.get(CHANNEL_ID);
+    const channel = CHANNEL_ID
+      ? interaction.guild?.channels.cache.get(CHANNEL_ID)
+      : undefined;
 
     if (!channel || !(channel instanceof TextChannel)) {
       await interaction.reply({

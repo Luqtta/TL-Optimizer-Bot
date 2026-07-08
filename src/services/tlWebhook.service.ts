@@ -34,13 +34,10 @@ export function registerTlWebhookRoutes(app: Express, client: Client) {
       const timestamp = req.headers["x-ls-timestamp"];
       const secret = process.env.TL_WEBHOOK_SECRET;
 
+      // Requisição não autenticada NÃO gera log no Discord: o endpoint é
+      // público e qualquer um poderia floodar o canal de logs. Só console.
       if (!signature || !timestamp || !secret) {
-        await logWebhookAction(client, {
-          event: "WEBHOOK_INVALID",
-          reason: "Missing signature, timestamp, or secret",
-          success: false,
-          statusCode: 401
-        });
+        console.warn("[WEBHOOK] 401: assinatura/timestamp/secret ausente");
         return res.status(401).json({ error: "Unauthorized" });
       }
 
@@ -49,12 +46,7 @@ export function registerTlWebhookRoutes(app: Express, client: Client) {
       const currentTimestamp = Date.now() / 1000;
 
       if (Math.abs(currentTimestamp - webhookTimestamp) > 300) {
-        await logWebhookAction(client, {
-          event: "WEBHOOK_INVALID",
-          reason: "Timestamp fora do intervalo válido",
-          success: false,
-          statusCode: 401
-        });
+        console.warn("[WEBHOOK] 401: timestamp fora do intervalo válido");
         return res.status(401).json({ error: "Timestamp expired" });
       }
 
@@ -66,12 +58,7 @@ export function registerTlWebhookRoutes(app: Express, client: Client) {
         .digest("hex");
 
       if (!timingSafeEqual(signature, expectedSignature)) {
-        await logWebhookAction(client, {
-          event: "WEBHOOK_INVALID",
-          reason: "Assinatura HMAC inválida",
-          success: false,
-          statusCode: 401
-        });
+        console.warn("[WEBHOOK] 401: assinatura HMAC inválida");
         return res.status(401).json({ error: "Invalid signature" });
       }
 

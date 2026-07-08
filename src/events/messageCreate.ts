@@ -8,8 +8,7 @@ import {
 const inviteRegex =
   /(discord\.gg\/|discord\.com\/invite\/|discordapp\.com\/invite\/)/i;
 
-const SUGGESTION_CHANNEL_ID =
-  process.env.SUGGESTION_CHANNEL_ID ?? "1505272626128355520";
+const SUGGESTION_CHANNEL_ID = process.env.SUGGESTION_CHANNEL_ID;
 
 export async function messageCreateEvent(message: Message) {
   try {

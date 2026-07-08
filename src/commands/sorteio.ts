@@ -15,6 +15,9 @@ import {
 } from "../services/giveaway.service.js";
 
 async function handleCriar(interaction: ChatInputCommandInteraction) {
+  // Enviar mensagem + reagir + salvar pode passar de 3s; defer evita "Unknown interaction".
+  await interaction.deferReply({ flags: 64 });
+
   const channel = interaction.options.getChannel("canal", true);
   const prize = interaction.options.getString("premio", true);
   const durationHours = interaction.options.getInteger("duracao", true);
@@ -23,9 +26,8 @@ async function handleCriar(interaction: ChatInputCommandInteraction) {
     interaction.options.getInteger("minimo_participantes") ?? 1;
 
   if (channel.type !== ChannelType.GuildText) {
-    await interaction.reply({
-      content: "❌ Selecione um canal de texto válido.",
-      flags: 64
+    await interaction.editReply({
+      content: "❌ Selecione um canal de texto válido."
     });
     return;
   }
@@ -71,10 +73,9 @@ async function handleCriar(interaction: ChatInputCommandInteraction) {
   });
 
   if (!saved) {
-    await interaction.reply({
+    await interaction.editReply({
       content:
-        "⚠️ O sorteio foi postado, mas não consegui salvá-lo. Ele pode não encerrar automaticamente.",
-      flags: 64
+        "⚠️ O sorteio foi postado, mas não consegui salvá-lo. Ele pode não encerrar automaticamente."
     });
     return;
   }
@@ -91,9 +92,8 @@ async function handleCriar(interaction: ChatInputCommandInteraction) {
     status: "ACTIVE"
   });
 
-  await interaction.reply({
-    content: `✅ Sorteio criado em ${channel}. Encerra <t:${endUnix}:R>.`,
-    flags: 64
+  await interaction.editReply({
+    content: `✅ Sorteio criado em ${channel}. Encerra <t:${endUnix}:R>.`
   });
 }
 

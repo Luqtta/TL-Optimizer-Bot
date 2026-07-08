@@ -14,6 +14,26 @@ import {
   TextInputStyle
 } from "discord.js";
 
+function ticketChannelName(username: string) {
+  // Discord só aceita minúsculas, números, hífen e underscore em nome de canal
+  return `ticket-${username.toLowerCase().replace(/[^a-z0-9_-]/g, "")}`;
+}
+
+// O nome do canal usa o username (pode colidir depois de sanitizado),
+// então o dono de verdade fica registrado no tópico: "Ticket de tag | ID: 123".
+function findUserTicket(
+  guild: ButtonInteraction["guild"] & {},
+  userId: string,
+  categoryId: string | undefined
+) {
+  return guild.channels.cache.find(
+    (channel) =>
+      channel.parentId === categoryId &&
+      channel.type === ChannelType.GuildText &&
+      !!channel.topic?.endsWith(`ID: ${userId}`)
+  );
+}
+
 export async function handleTicketButton(interaction: ButtonInteraction) {
   if (!interaction.guild) {
     await interaction.reply({
@@ -24,10 +44,10 @@ export async function handleTicketButton(interaction: ButtonInteraction) {
   }
 
   if (interaction.customId === "ticket_open") {
-    const existingChannel = interaction.guild.channels.cache.find(
-      (channel) =>
-        channel.name === `ticket-${interaction.user.id}` &&
-        channel.parentId === process.env.TICKET_CATEGORY_ID
+    const existingChannel = findUserTicket(
+      interaction.guild,
+      interaction.user.id,
+      process.env.TICKET_CATEGORY_ID
     );
 
     if (existingChannel) {
@@ -76,6 +96,22 @@ export async function handleTicketButton(interaction: ButtonInteraction) {
   }
 
   if (interaction.customId === "ticket_close") {
+    const confirmRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId("ticket_close_confirm")
+        .setLabel("Confirmar fechamento")
+        .setStyle(ButtonStyle.Danger)
+    );
+
+    await interaction.reply({
+      content:
+        "Tem certeza que deseja fechar este ticket? O canal será apagado e a transcrição enviada.",
+      components: [confirmRow],
+      flags: 64
+    });
+  }
+
+  if (interaction.customId === "ticket_close_confirm") {
     await closeTicket(interaction);
   }
 }
@@ -105,10 +141,10 @@ export async function handleTicketModal(interaction: ModalSubmitInteraction) {
     return;
   }
 
-  const existingChannel = interaction.guild.channels.cache.find(
-    (channel) =>
-      channel.name === `ticket-${interaction.user.id}` &&
-      channel.parentId === categoryId
+  const existingChannel = findUserTicket(
+    interaction.guild,
+    interaction.user.id,
+    categoryId
   );
 
   if (existingChannel) {
@@ -162,7 +198,7 @@ export async function handleTicketModal(interaction: ModalSubmitInteraction) {
   }
 
   const ticketChannel = await interaction.guild.channels.create({
-    name: `ticket-${interaction.user.id}`,
+    name: ticketChannelName(interaction.user.username),
     type: ChannelType.GuildText,
     parent: categoryId,
     topic: `Ticket de ${interaction.user.tag} | ID: ${interaction.user.id}`,
@@ -178,17 +214,13 @@ export async function handleTicketModal(interaction: ModalSubmitInteraction) {
         "",
         "**Horário de atendimento:**",
         "Segunda a sábado, das 06:00 às 18:00.",
-        "O funcionamento pode variar em feriados.",
-        "",
-        "**Resumo:**",
-        summary,
-        "",
-        "**Email:**",
-        email,
-        "",
-        "**Descrição:**",
-        description
+        "O funcionamento pode variar em feriados."
       ].join("\n")
+    )
+    .addFields(
+      { name: "Resumo", value: summary },
+      { name: "Email", value: email, inline: true },
+      { name: "Descrição", value: description }
     )
     .setFooter({
       text: "TL Optimizer • Suporte"
@@ -210,24 +242,8 @@ export async function handleTicketModal(interaction: ModalSubmitInteraction) {
     components: [row]
   });
 
-  // Manda uma cópia do ticket no privado do usuário — assim ele tem registro salvo
-  // e o suporte pode fechar o canal sem esperar ele visualizar/responder.
-  let dmSent = true;
-  try {
-    const dmEmbed = EmbedBuilder.from(embed).setTitle("Cópia do seu ticket");
-    await interaction.user.send({
-      content:
-        "Aqui está uma cópia do ticket que você abriu no TL Optimizer, para você ter registrado. Nossa equipe vai responder no canal do ticket no servidor.",
-      embeds: [dmEmbed]
-    });
-  } catch {
-    dmSent = false; // DM fechada / bloqueada
-  }
-
   await interaction.editReply({
-    content: dmSent
-      ? `Seu ticket foi criado: ${ticketChannel}\nEnviei uma cópia no seu privado.`
-      : `Seu ticket foi criado: ${ticketChannel}\nNão consegui te enviar no privado (DMs fechadas). Ative as mensagens diretas para receber a cópia.`
+    content: `Seu ticket foi criado: ${ticketChannel}\nQuando ele for fechado, você recebe a transcrição no privado.`
   });
 }
 
@@ -259,25 +275,59 @@ async function closeTicket(interaction: ButtonInteraction) {
     ? interaction.guild.channels.cache.get(logChannelId)
     : null;
 
-  const messages = await channel.messages.fetch({
-    limit: 100
-  });
+  // O fetch é limitado a 100 por chamada — pagina até pegar o canal inteiro.
+  const allMessages = [];
+  let before: string | undefined;
+  while (true) {
+    const batch = await channel.messages.fetch({ limit: 100, before });
+    if (batch.size === 0) break;
+    allMessages.push(...batch.values());
+    before = batch.last()!.id;
+    if (batch.size < 100) break;
+  }
 
-  const sortedMessages = Array.from(messages.values()).sort(
+  const sortedMessages = allMessages.sort(
     (a, b) => a.createdTimestamp - b.createdTimestamp
   );
 
   const transcript = sortedMessages
     .map((message) => {
       const date = new Date(message.createdTimestamp).toLocaleString("pt-BR");
-      const content = message.content || "[sem texto]";
-      return `[${date}] ${message.author.tag}: ${content}`;
+      const parts = [
+        message.content,
+        ...message.attachments.map((attachment) => `[anexo] ${attachment.url}`),
+        ...message.embeds.map(
+          (embed) => `[embed] ${embed.title ?? ""} ${embed.description ?? ""}`.trim()
+        )
+      ].filter(Boolean);
+      return `[${date}] ${message.author.tag}: ${parts.join("\n  ") || "[sem texto]"}`;
     })
     .join("\n");
 
   const file = new AttachmentBuilder(Buffer.from(transcript, "utf-8"), {
     name: `${channel.name}-transcript.txt`
   });
+
+  // Manda a transcrição no privado do dono do ticket, pra ele ficar com o registro.
+  // O ID do dono fica no tópico do canal ("Ticket de tag | ID: 123").
+  const ownerId = channel.topic?.match(/ID: (\d+)/)?.[1];
+  let dmSent = false;
+  try {
+    if (!ownerId) throw new Error("owner not found");
+    const owner = await interaction.client.users.fetch(ownerId);
+    await owner.send({
+      content:
+        "Seu ticket no TL Optimizer foi fechado. Aqui está a transcrição completa da conversa:",
+      files: [
+        new AttachmentBuilder(Buffer.from(transcript, "utf-8"), {
+          name: `${channel.name}-transcript.txt`
+        })
+      ]
+    });
+    dmSent = true;
+  } catch {
+    // DM fechada / bloqueada / usuário saiu do servidor
+  }
 
   if (logChannel && logChannel.type === ChannelType.GuildText) {
     const embed = new EmbedBuilder()
@@ -304,7 +354,9 @@ async function closeTicket(interaction: ButtonInteraction) {
   }
 
   await interaction.editReply({
-    content: "Ticket fechado. A transcrição foi enviada para o canal de logs."
+    content: dmSent
+      ? "Ticket fechado. A transcrição foi enviada para o canal de logs e para o privado do usuário."
+      : "Ticket fechado. A transcrição foi enviada para o canal de logs (não consegui enviar no privado do usuário — DMs fechadas)."
   });
 
   setTimeout(() => {

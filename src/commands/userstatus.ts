@@ -1,5 +1,6 @@
 import {
   ChatInputCommandInteraction,
+  PermissionFlagsBits,
   SlashCommandBuilder
 } from "discord.js";
 
@@ -13,7 +14,9 @@ export const userStatusCommand = {
   data: new SlashCommandBuilder()
     .setName("userstatus")
     .setDescription("Verificar status de um usuário vinculado")
-    .setDMPermission(true)
+    // Mostra email do cliente — só admin pode usar.
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .setDMPermission(false)
     .addUserOption(option =>
       option
         .setName("user")

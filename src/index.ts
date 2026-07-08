@@ -19,6 +19,11 @@ import {
   handleTicketModal
 } from "./interactions/ticketButtons.js";
 
+import {
+  handleVerifyButton,
+  handleVerifyModal
+} from "./interactions/verifyButtons.js";
+
 import { registerGithubWebhookRoutes } from "./services/githubWebhookServer.js";
 import {
   registerTlWebhookRoutes,
@@ -150,11 +155,19 @@ client.once("clientReady", () => {
 client.on("interactionCreate", async (interaction: Interaction) => {
   try {
     if (interaction.isButton()) {
+      if (interaction.customId.startsWith("verify_")) {
+        await handleVerifyButton(interaction);
+        return;
+      }
       await handleTicketButton(interaction);
       return;
     }
 
     if (interaction.isModalSubmit()) {
+      if (interaction.customId.startsWith("verify_")) {
+        await handleVerifyModal(interaction);
+        return;
+      }
       await handleTicketModal(interaction);
       return;
     }

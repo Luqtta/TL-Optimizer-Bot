@@ -36,7 +36,7 @@ function createAntivirusEmbed() {
       ].join("\n")
     )
     .setImage(
-      "https://media.discordapp.net/attachments/1505279965321760930/1524503849602388178/image.png?ex=6a4ffc59&is=6a4eaad9&hm=561e780a9435b7a1911fc2815494a98a8a43654ebb756e45b254323b10dcfd54&=&format=webp&quality=lossless&width=1813&height=864"
+      "https://media.discordapp.net/attachments/1505279965321760930/1524510582018146414/image.png?ex=6a50029e&is=6a4eb11e&hm=fea50910f210bee43d3b1ec9536908f1bb19372b28a2ddd1e5de901dc03bf492&=&format=webp&quality=lossless&width=1715&height=864"
     );
 }
 

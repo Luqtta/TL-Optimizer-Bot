@@ -242,25 +242,26 @@ async function sendWelcomeImage(member: GuildMember) {
 async function sendWelcomeDm(member: GuildMember) {
   const welcomeDmEmbed = new EmbedBuilder()
     .setColor("#3b82f6")
-    .setTitle("Boas-vindas ao TL OPTIMIZER")
+    .setTitle("Bem-vindo à TL Optimizer 🚀")
+    .setURL("https://thelite.com.br")
     .setThumbnail(member.client.user?.displayAvatarURL({ size: 256 }) ?? null)
     .setDescription(
       [
-        "O TL OPTIMIZER é uma plataforma de otimização para melhorar desempenho e experiência no seu uso diário.",
+        "Seu PC pode rodar **mais liso, com mais FPS e menos travamento** — e o melhor: dá pra começar **de graça, sem cartão**.",
         "",
-        "**Como funciona**",
-        "Você acessa os recursos da plataforma conforme o plano ativo da sua conta.",
+        "**🎮 Comece agora (grátis)**",
+        "Cria tua conta no site e baixa o app. No plano gratuito você já usa o painel de desempenho, o monitoramento em tempo real e a limpeza — sem pagar nada.",
+        "➜ https://thelite.com.br",
         "",
-        "**Como assinar**",
-        "Acesse o site oficial do TL OPTIMIZER, escolha seu plano e finalize a assinatura.",
+        "**⚡ Quer o máximo? Destrave o PRO**",
+        "PC Boost, Game Mode, Auto Limpeza e os Tweaks de otimização — o que acelera o FPS e corta o input lag de verdade — são exclusivos do PRO. Escolhe o plano no site quando quiser.",
         "",
-        "**Já é assinante?**",
-        "Use o comando `/vincular` no servidor para conectar sua conta.",
-        "Depois da vinculação, você recebe o cargo do seu plano e benefícios exclusivos automaticamente."
+        "**⭐ Já tem plano ativo? Pega teu cargo VIP**",
+        "Digita `/vincular` aqui no meu privado (ou no servidor) pra conectar tua conta. Assinantes ganham **cargo exclusivo + canais VIP** no Discord na hora, automaticamente."
       ].join("\n")
     )
     .setFooter({
-      text: "Se precisar de ajuda, abra um ticket no servidor."
+      text: "Dúvidas? Abra um ticket no servidor que a gente te ajuda."
     });
 
   try {

@@ -56,11 +56,16 @@ export async function syncUserRoles(
     const yearlyRoleId = process.env.ROLE_YEARLY_ID;
     const lifetimeRoleId = process.env.ROLE_LIFETIME_ID;
 
-    const allRoleIds = [weeklyRoleId, monthlyRoleId, yearlyRoleId, lifetimeRoleId].filter(
-      Boolean
-    ) as string[];
+    // Só mexe em cargos que existem NESTA guild. Um ID obsoleto no env (cargo apagado/recriado)
+    // faz o Discord retornar "Unknown Role" e derrubaria o sync inteiro — aqui a gente ignora.
+    const guildRoles = member.guild.roles.cache;
+    const existsHere = (id?: string): id is string => !!id && guildRoles.has(id);
 
-    await member.roles.remove(allRoleIds);
+    const allRoleIds = [weeklyRoleId, monthlyRoleId, yearlyRoleId, lifetimeRoleId].filter(existsHere);
+
+    if (allRoleIds.length > 0) {
+      await member.roles.remove(allRoleIds);
+    }
 
     let roleToAdd: string | null = null;
 
@@ -80,6 +85,14 @@ export async function syncUserRoles(
       case "FREE":
         roleToAdd = null;
         break;
+    }
+
+    // Cargo do plano configurado mas inexistente na guild: avisa e não tenta adicionar (evita o crash).
+    if (roleToAdd && !guildRoles.has(roleToAdd)) {
+      console.warn(
+        `[SYNC] Cargo do plano ${plan} (id ${roleToAdd}) não existe na guild ${member.guild.name} — pulei. Confira ROLE_${plan}_ID.`
+      );
+      roleToAdd = null;
     }
 
     let action: SyncResult["action"] = "NO_ACTION";

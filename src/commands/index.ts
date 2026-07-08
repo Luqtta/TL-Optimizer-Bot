@@ -9,6 +9,7 @@ import { ticketCommand } from "./ticket.js";
 import { setupApresentacaoCommand } from "./setup-apresentacao.js";
 import { setupAntivirusCommand } from "./setup-antivirus.js";
 import { setupVerificarCommand } from "./setup-verificar.js";
+import { setupBoosterCommand } from "./setup-booster.js";
 import { sorteioCommand } from "./sorteio.js";
 import { sugestaoCommand } from "./sugestao.js";
 import { vincularCommand } from "./vincular.js";
@@ -39,6 +40,7 @@ export const commands: BotCommand[] = [
   setupApresentacaoCommand,
   setupAntivirusCommand,
   setupVerificarCommand,
+  setupBoosterCommand,
   sorteioCommand,
   sugestaoCommand,
   vincularCommand,

@@ -210,8 +210,24 @@ export async function handleTicketModal(interaction: ModalSubmitInteraction) {
     components: [row]
   });
 
+  // Manda uma cópia do ticket no privado do usuário — assim ele tem registro salvo
+  // e o suporte pode fechar o canal sem esperar ele visualizar/responder.
+  let dmSent = true;
+  try {
+    const dmEmbed = EmbedBuilder.from(embed).setTitle("Cópia do seu ticket");
+    await interaction.user.send({
+      content:
+        "Aqui está uma cópia do ticket que você abriu no TL Optimizer, para você ter registrado. Nossa equipe vai responder no canal do ticket no servidor.",
+      embeds: [dmEmbed]
+    });
+  } catch {
+    dmSent = false; // DM fechada / bloqueada
+  }
+
   await interaction.editReply({
-    content: `Seu ticket foi criado: ${ticketChannel}`
+    content: dmSent
+      ? `Seu ticket foi criado: ${ticketChannel}\nEnviei uma cópia no seu privado.`
+      : `Seu ticket foi criado: ${ticketChannel}\nNão consegui te enviar no privado (DMs fechadas). Ative as mensagens diretas para receber a cópia.`
   });
 }
 

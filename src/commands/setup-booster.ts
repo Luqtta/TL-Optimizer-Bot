@@ -10,19 +10,19 @@ import {
 function createBoosterEmbed() {
   return new EmbedBuilder()
     .setColor("#f47fff") // rosa de boost do Discord
-    .setTitle("🚀 Dê boost e ganhe 1 mês de TL Optimizer grátis")
+    .setTitle("🚀 Dê 2 boosts e ganhe 1 mês de TL Optimizer grátis")
     .setDescription(
       [
-        "Impulsione o servidor do **TL Optimizer** e ganhe **1 mês do plano Mensal totalmente grátis** — nossa forma de agradecer quem ajuda a comunidade a crescer. 💜",
+        "Impulsione o servidor do **TL Optimizer** com **2 boosts** e ganhe **1 mês do plano Mensal totalmente grátis** — nossa forma de agradecer quem ajuda a comunidade a crescer. 💜",
         "",
         "🎁 **O que você ganha:**",
         "• 1 mês do plano **Mensal** liberado no app, de graça",
         "• Cargo de assinante + acesso aos canais e benefícios VIP",
         "",
         "✅ **Como resgatar:**",
-        "1. Dê **boost** no servidor",
+        "1. Dê **2 boosts** no servidor (o Nitro te dá 2 — é só aplicar os dois aqui)",
         "2. Vincule sua conta com `/vincular` (o mesmo email da sua conta TL Optimizer)",
-        "3. Abra um ticket avisando — a equipe confirma seu boost e credita o seu mês",
+        "3. Abra um ticket avisando — a equipe confirma seus boosts e credita o seu mês",
         "",
         "Ainda não tem conta? Crie de graça em https://thelite.com.br",
         "",

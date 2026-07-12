@@ -45,7 +45,7 @@ function createApresentacaoEmbed() {
         "🔗 [Site](https://thelite.com.br) • <:discord:1517592080308764754> [Discord](https://discord.gg/QasuSCE6Hj)",
         "",
         "**Redes Sociais**",
-        "<:tiktok:1517592036549591236> [TikTok](https://www.tiktok.com/@tloptimizer) • <:youtube:949421235614392373> [YouTube](https://www.youtube.com/@tloptimizer) • <:instagram:1517592064898896053> [Instagram](https://www.instagram.com/tloptimizer/) • <:x_:1522643045630087289> [X](https://x.com/tloptimizerbr)"
+        "<:tiktok:1517592036549591236> [TikTok](https://www.tiktok.com/@tloptimizer) • <:youtube:949421235614392373> [YouTube](https://www.youtube.com/@TLOptimizerBrasil) • <:instagram:1517592064898896053> [Instagram](https://www.instagram.com/tloptimizer/) • <:x_:1522643045630087289> [X](https://x.com/tloptimizerbr)"
       ].join("\n")
     )
     .setImage(

@@ -8,6 +8,7 @@ export interface DMNotificationOptions {
   title: string;
   description: string;
   color: string;
+  thumbnail?: string;
   fields?: Array<{ name: string; value: string; inline?: boolean }>;
 }
 
@@ -156,9 +157,26 @@ function createSyncEmbed(
       break;
 
     case "ACCOUNT_DELETED":
-      embedData.title = "🗑️ Conta apagada";
+      embedData.title = "🗑️ Sua conta foi apagada";
       embedData.description =
-        "Sua conta na TL Optimizer foi apagada. Seus cargos premium foram removidos e o vínculo com o Discord foi desfeito. Se não foi você, fale com o suporte.";
+        "Sua conta na **TL Optimizer** foi apagada, conforme solicitado. Foi um prazer ter você por aqui. 💜";
+      embedData.thumbnail = LOGO_URL;
+      embedData.fields = [
+        {
+          name: "🎭 O que mudou aqui no Discord",
+          value: "Seus cargos premium foram removidos e o vínculo com sua conta foi desfeito."
+        },
+        {
+          name: "↩️ Mudou de ideia?",
+          value:
+            "É só criar uma conta nova em [thelite.com.br](https://thelite.com.br) quando quiser — a porta fica sempre aberta."
+        },
+        {
+          name: "🛟 Não foi você?",
+          value:
+            "Se você não apagou sua conta, abra um ticket no suporte o quanto antes."
+        }
+      ];
       break;
 
     default:
@@ -175,6 +193,10 @@ function createSyncEmbed(
       iconURL: LOGO_URL
     })
     .setTimestamp();
+
+  if (embedData.thumbnail) {
+    embed.setThumbnail(embedData.thumbnail);
+  }
 
   if (embedData.fields && embedData.fields.length > 0) {
     embed.addFields(...embedData.fields);

@@ -7,7 +7,7 @@ export interface LinkedUser {
 }
 
 export interface WebhookEvent {
-  type: "LINKED" | "UNLINKED" | "UPGRADED" | "DOWNGRADED" | "RENEWED" | "CANCELED" | "REACTIVATED" | "EXPIRED" | "REFUNDED";
+  type: "LINKED" | "UNLINKED" | "UPGRADED" | "DOWNGRADED" | "RENEWED" | "CANCELED" | "REACTIVATED" | "EXPIRED" | "REFUNDED" | "ACCOUNT_DELETED";
   discordId: string;
   email: string;
   previousPlan?: string;

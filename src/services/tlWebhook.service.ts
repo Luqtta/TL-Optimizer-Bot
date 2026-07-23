@@ -166,6 +166,10 @@ async function dispatchWebhookEvent(
       await handleExpired(client, event);
       break;
 
+    case "ACCOUNT_DELETED":
+      await handleAccountDeleted(client, event);
+      break;
+
     case "REFUNDED":
       await handleRefunded(client, event);
       break;
@@ -467,6 +471,24 @@ async function handleExpired(
   await sendSyncNotification(client, event.discordId, "EXPIRED");
 
   console.log(`[WEBHOOK] Assinatura de ${event.discordId} expirou.`);
+}
+
+async function handleAccountDeleted(
+  client: Client,
+  event: WebhookEvent
+): Promise<void> {
+  // Conta apagada pelo usuário (LGPD): remove os cargos de assinatura e desfaz o vínculo local.
+  // Mesma remoção de cargo do EXPIRED, mas a DM é a de "conta apagada" (não a de "assinatura
+  // expirou, renove", que ficava errada pra quem apagou a conta de propósito).
+  await syncUserRolesInAllGuilds(client, event.discordId, "FREE");
+
+  removeLinkedUser(event.discordId);
+
+  await sendSyncNotification(client, event.discordId, "ACCOUNT_DELETED");
+
+  console.log(
+    `[WEBHOOK] Conta apagada para ${event.discordId} — cargos removidos e vínculo desfeito.`
+  );
 }
 
 async function handleRefunded(

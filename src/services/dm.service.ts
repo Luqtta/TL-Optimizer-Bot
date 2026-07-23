@@ -20,7 +20,8 @@ const eventColors = {
   CANCELED: "#FFA07A", // salmão
   REACTIVATED: "#95E1D3", // verde menta
   EXPIRED: "#FF6B9D", // rosa
-  REFUNDED: "#C7CEEA" // lavanda
+  REFUNDED: "#C7CEEA", // lavanda
+  ACCOUNT_DELETED: "#9CA3AF" // cinza
 };
 
 // Logo do TL Optimizer no rodapé das DMs de notificação (host permanente no site).
@@ -152,6 +153,12 @@ function createSyncEmbed(
       embedData.title = "💰 Reembolso Processado";
       embedData.description =
         "Seu reembolso foi processado com sucesso. Seus benefícios foram removidos.";
+      break;
+
+    case "ACCOUNT_DELETED":
+      embedData.title = "🗑️ Conta apagada";
+      embedData.description =
+        "Sua conta na TL Optimizer foi apagada. Seus cargos premium foram removidos e o vínculo com o Discord foi desfeito. Se não foi você, fale com o suporte.";
       break;
 
     default:

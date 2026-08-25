@@ -41,13 +41,31 @@ import { validateEnv } from "./utils/validateEnv.js";
 dotenv.config();
 validateEnv();
 
+// O Discord exige REVISÃO dos intents privilegiados depois que o app passa de 10.000 usuários e,
+// até a aprovação sair, mantém os dois REVOGADOS. Pedir um intent revogado não degrada: derruba o
+// login inteiro ("Used disallowed intents"), e o bot fica 100% offline.
+// Com a flag em false o bot sobe SEM eles — slash commands, tickets, webhooks do site e a
+// sincronização de cargo por plano (que roda por REST, não por evento de gateway) continuam iguais.
+// Ficam desativados: boas-vindas + cargo automático, anti-tampering de cargo e a leitura de conteúdo
+// (sugestões e anti-invite). Aprovada a revisão, basta setar PRIVILEGED_INTENTS=true e reiniciar.
+const PRIVILEGED_INTENTS = process.env.PRIVILEGED_INTENTS === "true";
+
+if (!PRIVILEGED_INTENTS) {
+  console.warn(
+    "[DISCORD] PRIVILEGED_INTENTS=false — subindo em modo REDUZIDO. Desativados: boas-vindas/cargo "
+      + "automático, anti-tampering de cargo, sugestões e anti-invite. Slash commands, tickets e sync "
+      + "de plano seguem normais. Setar PRIVILEGED_INTENTS=true quando o Discord aprovar a revisão."
+  );
+}
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.DirectMessages,
-    GatewayIntentBits.MessageContent
+    ...(PRIVILEGED_INTENTS
+      ? [GatewayIntentBits.GuildMembers, GatewayIntentBits.MessageContent]
+      : [])
   ],
   // Limita a cache de mensagens — maior fonte de crescimento de memória com a
   // intent MessageContent. O bot age na mensagem no próprio evento e busca
@@ -230,17 +248,23 @@ client.on("interactionCreate", async (interaction: Interaction) => {
   }
 });
 
-client.on("guildMemberAdd", async (member) => {
-  await guildMemberAddEvent(member);
-});
+// Sem os intents privilegiados estes eventos NUNCA chegam (membro) ou chegam com o texto vazio
+// (mensagem). Não registrar é melhor que registrar e não fazer nada: messageCreate com content
+// vazio apagaria toda sugestão como se fosse mensagem em branco, e o anti-invite deixaria passar
+// todo convite por não achar a URL — falha silenciosa, pior que a feature desligada.
+if (PRIVILEGED_INTENTS) {
+  client.on("guildMemberAdd", async (member) => {
+    await guildMemberAddEvent(member);
+  });
 
-client.on("guildMemberUpdate", async (oldMember, newMember) => {
-  await guildMemberUpdateEvent(oldMember, newMember);
-});
+  client.on("guildMemberUpdate", async (oldMember, newMember) => {
+    await guildMemberUpdateEvent(oldMember, newMember);
+  });
 
-client.on("messageCreate", async (message) => {
-  await messageCreateEvent(message);
-});
+  client.on("messageCreate", async (message) => {
+    await messageCreateEvent(message);
+  });
+}
 
 // Graceful shutdown
 async function shutdown(signal: string) {

@@ -66,6 +66,40 @@ const client = new Client({
   }
 });
 
+// Servidor HTTP sobe ANTES do login no Discord, de propósito: se o login falhar (token resetado,
+// intents negados), o /health precisa existir pra RESPONDER que está degradado. Enquanto isso ficou
+// dentro do clientReady, um login quebrado deixava o serviço sem endpoint nenhum e a plataforma de
+// hosting só via "processo vivo" — o bot passou dias offline sem ninguém ser avisado.
+const app = express();
+
+app.use(
+  express.json({
+    verify: (req: any, _res, buf) => {
+      req.rawBody = buf;
+    }
+  })
+);
+
+// Healthcheck para monitores de uptime / plataformas de hosting. Devolve 503 enquanto o gateway do
+// Discord não estiver pronto: 200 fixo (como era antes) fazia o healthcheck aprovar um bot que não
+// estava conectado a nada. Aponte o Healthcheck Path da plataforma pra cá pro restart ser automático.
+app.get("/health", (_req, res) => {
+  const ready = client.isReady();
+
+  res.status(ready ? 200 : 503).json({
+    status: ready ? "ok" : "degraded",
+    uptime: process.uptime(),
+    discord: ready ? "ready" : "not-ready",
+    wsPing: client.ws.ping
+  });
+});
+
+const webhookPort = Number(process.env.PORT) || 3001;
+
+app.listen(webhookPort, "0.0.0.0", () => {
+  console.log(`[WEBHOOK] Servidor unificado rodando em 0.0.0.0:${webhookPort}`);
+});
+
 client.once("clientReady", () => {
   console.log(`[DISCORD] Bot online como ${client.user?.tag}`);
 
@@ -80,35 +114,11 @@ client.once("clientReady", () => {
   // Reagendar sorteios ativos que sobreviveram a um restart
   startGiveawayScheduler(client);
 
-  // Inicializar servidor de webhooks unificado
-  const app = express();
-
-  app.use(
-    express.json({
-      verify: (req: any, _res, buf) => {
-        req.rawBody = buf;
-      }
-    })
-  );
-
-  // Healthcheck para monitores de uptime / plataformas de hosting.
-  app.get("/health", (_req, res) => {
-    res.json({
-      status: "ok",
-      uptime: process.uptime(),
-      discord: client.isReady() ? "ready" : "not-ready",
-      wsPing: client.ws.ping
-    });
-  });
-
+  // Rotas de webhook só DEPOIS do bot estar pronto (elas agem no Discord na hora que a requisição
+  // chega). O Express aceita rotas novas com o servidor já escutando, então o /health acima ficou no
+  // ar desde o boot e estas entram aqui — cada uma no momento em que é segura.
   registerTlWebhookRoutes(app, client);
   registerGithubWebhookRoutes(app, client);
-
-  const webhookPort = Number(process.env.PORT) || 3001;
-
-  app.listen(webhookPort, "0.0.0.0", () => {
-    console.log(`[WEBHOOK] Servidor unificado rodando em 0.0.0.0:${webhookPort}`);
-  });
 
   // Reprocessar eventos de webhook que ficaram pendentes (ex.: queda do bot).
   reprocessPendingWebhookEvents(client).catch((error) => {
@@ -244,5 +254,25 @@ async function shutdown(signal: string) {
 process.on("SIGINT", () => shutdown("SIGINT"));
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 
-client.login(process.env.DISCORD_TOKEN);
+// Sessão invalidada pelo Discord (token resetado, bot removido, credencial revogada): o discord.js
+// NÃO encerra o processo sozinho — ele fica vivo com o WebSocket morto, aparecendo offline pra todo
+// mundo enquanto o /health antigo respondia "ok". Sair aqui deixa a plataforma reiniciar; se o token
+// estiver mesmo inválido, vira crash loop VISÍVEL em vez de um bot mudo por dias.
+client.on("invalidated", () => {
+  console.error("[DISCORD] Sessao invalidada (token resetado/revogado). Encerrando pra reiniciar.");
+  process.exit(1);
+});
+
+// 'error' sem listener num EventEmitter é exceção não capturada — derrubaria o bot por um erro de
+// rede transitório que o discord.js já reconectaria sozinho. Loga e deixa a reconexão acontecer.
+client.on("error", (error) => {
+  console.error("[DISCORD] Erro no client:", error);
+});
+
+client.login(process.env.DISCORD_TOKEN).catch((error) => {
+  // Sem o catch, a falha de login virava unhandled rejection: stack trace cru e código de saída
+  // dependente da versão do Node. Explícito, o motivo fica legível no log da plataforma.
+  console.error("[DISCORD] Falha no login:", error);
+  process.exit(1);
+});
 

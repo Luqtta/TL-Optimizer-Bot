@@ -7,7 +7,9 @@ import {
 import { addSyncLog } from "./database.service.js";
 import { syncUserRoles } from "./sync.service.js";
 
-type PlanName = "WEEKLY" | "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE";
+// QUARTERLY = plano Trimestral. O backend manda "QUARTERLY" cru; so' o ANUAL e' traduzido
+// pra "YEARLY" na saida dele (DiscordSyncNotifier.planLabel), por vocabulario historico do bot.
+type PlanName = "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY" | "LIFETIME" | "FREE";
 
 interface BackendLink {
   discordId: string;
@@ -120,6 +122,8 @@ function desiredRoleId(plan: PlanName): string | null {
       return process.env.ROLE_WEEKLY_ID ?? null;
     case "MONTHLY":
       return process.env.ROLE_MONTHLY_ID ?? null;
+    case "QUARTERLY":
+      return process.env.ROLE_QUARTERLY_ID ?? null;
     case "YEARLY":
       return process.env.ROLE_YEARLY_ID ?? null;
     case "LIFETIME":
@@ -133,6 +137,7 @@ function planRoleIds(): string[] {
   return [
     process.env.ROLE_WEEKLY_ID,
     process.env.ROLE_MONTHLY_ID,
+    process.env.ROLE_QUARTERLY_ID,
     process.env.ROLE_YEARLY_ID,
     process.env.ROLE_LIFETIME_ID
   ].filter(Boolean) as string[];

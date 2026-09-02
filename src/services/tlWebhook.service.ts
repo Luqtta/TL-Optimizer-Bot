@@ -274,7 +274,7 @@ async function handleLinked(client: Client, event: WebhookEvent): Promise<void> 
   const newUser: LinkedUser = {
     discordId: event.discordId,
     email: event.email,
-    plan: (event.newPlan || "FREE") as "WEEKLY" | "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE",
+    plan: (event.newPlan || "FREE") as "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY" | "LIFETIME" | "FREE",
     status: "ACTIVE",
     updatedAt: event.timestamp
   };
@@ -314,7 +314,7 @@ async function handleUpgraded(
   client: Client,
   event: WebhookEvent
 ): Promise<void> {
-  const newPlan = (event.newPlan || "FREE") as "WEEKLY" | "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE";
+  const newPlan = (event.newPlan || "FREE") as "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY" | "LIFETIME" | "FREE";
 
   // Reconcilia os cargos pelo discordId do payload (fonte da verdade):
   // adiciona o cargo do newPlan e remove os outros dois de assinatura.
@@ -349,7 +349,7 @@ async function handleDowngraded(
   client: Client,
   event: WebhookEvent
 ): Promise<void> {
-  const newPlan = (event.newPlan || "FREE") as "WEEKLY" | "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE";
+  const newPlan = (event.newPlan || "FREE") as "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY" | "LIFETIME" | "FREE";
 
   // Reconcilia os cargos pelo discordId do payload (fonte da verdade).
   await syncUserRolesInAllGuilds(
@@ -385,7 +385,7 @@ async function handleRenewed(
 ): Promise<void> {
   // Registro local é opcional (fallback do plano); a fonte da verdade é o payload.
   const user = getLinkedUserByEmail(event.email);
-  const plan = (event.newPlan || user?.plan || "FREE") as "WEEKLY" | "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE";
+  const plan = (event.newPlan || user?.plan || "FREE") as "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY" | "LIFETIME" | "FREE";
 
   // Reconcilia os cargos pelo discordId do payload.
   await syncUserRolesInAllGuilds(client, event.discordId, plan);
@@ -429,7 +429,7 @@ async function handleReactivated(
 ): Promise<void> {
   // Registro local é opcional (fallback do plano); a fonte da verdade é o payload.
   const user = getLinkedUserByEmail(event.email);
-  const plan = (event.newPlan || user?.plan || "FREE") as "WEEKLY" | "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE";
+  const plan = (event.newPlan || user?.plan || "FREE") as "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY" | "LIFETIME" | "FREE";
 
   // Reconcilia os cargos pelo discordId do payload.
   await syncUserRolesInAllGuilds(client, event.discordId, plan);

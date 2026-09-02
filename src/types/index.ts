@@ -1,7 +1,8 @@
 export interface LinkedUser {
   discordId: string;
   email: string;
-  plan: "WEEKLY" | "MONTHLY" | "YEARLY" | "LIFETIME" | "FREE";
+  // QUARTERLY = Trimestral. Chega cru do backend; so' o anual vira "YEARLY" na saida dele.
+  plan: "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY" | "LIFETIME" | "FREE";
   status: "ACTIVE" | "CANCELED" | "EXPIRED";
   updatedAt: number;
 }

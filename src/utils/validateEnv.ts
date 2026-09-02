@@ -12,6 +12,10 @@ const RECOMMENDED: Record<string, string> = {
   AUTO_ROLE_ID: "cargo automático ao entrar no servidor",
   WELCOME_CHANNEL_ID: "canal de boas-vindas",
   ROLE_MONTHLY_ID: "cargo do plano mensal",
+  // RECOMENDADA, nunca obrigatoria: faltando, o bot sobe avisando e so' o cargo do trimestral
+  // deixa de ser dado. Como obrigatoria, ela derrubaria o bot inteiro ate' alguem criar o cargo.
+  ROLE_QUARTERLY_ID: "cargo do plano trimestral",
+  ROLE_WEEKLY_ID: "cargo do plano semanal",
   ROLE_YEARLY_ID: "cargo do plano anual",
   ROLE_LIFETIME_ID: "cargo do plano vitalício",
   TL_WEBHOOK_SECRET: "validação do webhook do TL Optimizer",

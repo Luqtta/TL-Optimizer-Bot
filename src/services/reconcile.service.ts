@@ -151,6 +151,11 @@ function targetPlan(link: BackendLink): PlanName {
 
 // Reconcilia UM vínculo. Só mexe nos cargos quando há divergência — assim não
 // floda a API do Discord nem dispara eventos à toa em quem já está correto.
+// Quantos vinculos o reconcile NAO conseguiu sequer olhar na rodada atual. Sem isto o resumo
+// dizia "0 correcoes" tanto quando estava tudo certo quanto quando nao deu pra checar NINGUEM —
+// que e' o que acontece sem o intent GUILD_MEMBERS. Dois cenarios opostos, mesma linha de log.
+let membrosNaoEncontrados = 0;
+
 async function reconcileLink(
   client: Client,
   link: BackendLink
@@ -164,6 +169,9 @@ async function reconcileLink(
     const member = await guild.members.fetch(link.discordId).catch(() => null);
 
     if (!member) {
+      // Contabiliza pra o resumo final nao dizer "0 correcoes" quando na verdade foi
+      // "nao consegui olhar ninguem". Sem o intent GUILD_MEMBERS isso acontece com TODOS.
+      membrosNaoEncontrados++;
       continue;
     }
 
@@ -199,6 +207,7 @@ async function runReconciliation(client: Client): Promise<void> {
   let page = 0;
   let processed = 0;
   let corrected = 0;
+  membrosNaoEncontrados = 0;
   let total: number | null = null;
 
   while (page < MAX_PAGES) {
@@ -263,7 +272,11 @@ async function runReconciliation(client: Client): Promise<void> {
   }
 
   console.log(
-    `[RECONCILE] Concluída em ${duration}ms. ${processed} processados, ${corrected} correções.`
+    `[RECONCILE] Concluída em ${duration}ms. ${processed} processados, ${corrected} correções` +
+    (membrosNaoEncontrados > 0
+      ? `, ${membrosNaoEncontrados} membro(s) NAO ENCONTRADO(S) — cargo nao verificado. ` +
+        `Se for a maioria, e' o intent GUILD_MEMBERS ausente (PRIVILEGED_INTENTS=${process.env.PRIVILEGED_INTENTS ?? "false"}).`
+      : ".")
   );
 
   await notifyReconcileComplete(client, {

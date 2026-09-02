@@ -53,6 +53,7 @@ export async function syncUserRoles(
 
     const weeklyRoleId = process.env.ROLE_WEEKLY_ID;
     const monthlyRoleId = process.env.ROLE_MONTHLY_ID;
+    const quarterlyRoleId = process.env.ROLE_QUARTERLY_ID;
     const yearlyRoleId = process.env.ROLE_YEARLY_ID;
     const lifetimeRoleId = process.env.ROLE_LIFETIME_ID;
 
@@ -61,7 +62,7 @@ export async function syncUserRoles(
     const guildRoles = member.guild.roles.cache;
     const existsHere = (id?: string): id is string => !!id && guildRoles.has(id);
 
-    const allRoleIds = [weeklyRoleId, monthlyRoleId, yearlyRoleId, lifetimeRoleId].filter(existsHere);
+    const allRoleIds = [weeklyRoleId, monthlyRoleId, quarterlyRoleId, yearlyRoleId, lifetimeRoleId].filter(existsHere);
 
     if (allRoleIds.length > 0) {
       await member.roles.remove(allRoleIds);
@@ -75,6 +76,9 @@ export async function syncUserRoles(
         break;
       case "MONTHLY":
         roleToAdd = monthlyRoleId || null;
+        break;
+      case "QUARTERLY":
+        roleToAdd = quarterlyRoleId || null;
         break;
       case "YEARLY":
         roleToAdd = yearlyRoleId || null;
@@ -134,6 +138,13 @@ export async function syncUserRolesInAllGuilds(
       const member = await guild.members.fetch(discordId).catch(() => null);
 
       if (!member) {
+        // NAO e' so' "saiu do servidor": sem o intent GUILD_MEMBERS o fetch falha pra QUALQUER
+        // membro fora do cache, e o cargo simplesmente nao e' dado. Antes isto passava mudo, e a
+        // unica forma de descobrir era alguem reclamar que assinou e nao ganhou cargo.
+        console.warn(
+          `[SYNC] Membro ${discordId} nao encontrado em ${guild.name} (fora do servidor, ou intent ` +
+          `GUILD_MEMBERS ausente: PRIVILEGED_INTENTS=${process.env.PRIVILEGED_INTENTS ?? "false"}). Cargo NAO aplicado.`
+        );
         continue;
       }
 

@@ -91,6 +91,17 @@ export async function syncUserRoles(
         break;
     }
 
+    // Plano PAGO sem cargo resolvido = variavel de ambiente ausente. Sem este aviso o efeito e'
+    // IDENTICO ao de um plano desconhecido: roleToAdd null, acao NO_ACTION, e o painel mostrando
+    // "Cargo sincronizado / Sucesso" enquanto o assinante nao recebe nada. Foi assim que o cargo do
+    // trimestral ficou faltando sem ninguem perceber.
+    if (!roleToAdd && plan !== "FREE") {
+      console.warn(
+        `[SYNC] Plano ${plan} sem cargo configurado (ROLE_${plan}_ID ausente no ambiente). ` +
+        `Nenhum cargo aplicado a ${member.id} em ${member.guild.name}.`
+      );
+    }
+
     // Cargo do plano configurado mas inexistente na guild: avisa e não tenta adicionar (evita o crash).
     if (roleToAdd && !guildRoles.has(roleToAdd)) {
       console.warn(

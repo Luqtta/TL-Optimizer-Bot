@@ -20,7 +20,7 @@ function createVerifyEmbed() {
         "",
         "Clique em **Verificar assinatura**, informe seu email e confirme com o código que enviamos — rápido e seguro.",
         "",
-        "Ainda não é assinante? Crie sua conta e escolha um plano em https://thelite.com.br"
+        "Ainda não é assinante? Crie sua conta e escolha um plano em https://tloptimizer.com"
       ].join("\n")
     );
 }

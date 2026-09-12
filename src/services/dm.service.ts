@@ -26,7 +26,7 @@ const eventColors = {
 };
 
 // Logo do TL Optimizer no rodapé das DMs de notificação (host permanente no site).
-const LOGO_URL = "https://thelite.com.br/logo-email.png";
+const LOGO_URL = "https://tloptimizer.com/logo-email.png";
 
 export async function sendSyncNotification(
   client: Client,
@@ -145,7 +145,7 @@ function createSyncEmbed(
       embedData.fields = [
         {
           name: "Próximos Passos",
-          value: "Você pode [renovar sua assinatura](https://thelite.com.br/checkout) a qualquer momento."
+          value: "Você pode [renovar sua assinatura](https://tloptimizer.com/checkout) a qualquer momento."
         }
       ];
       break;
@@ -169,7 +169,7 @@ function createSyncEmbed(
         {
           name: "↩️ Mudou de ideia?",
           value:
-            "É só criar uma conta nova em [thelite.com.br](https://thelite.com.br) quando quiser — a porta fica sempre aberta."
+            "É só criar uma conta nova em [tloptimizer.com](https://tloptimizer.com) quando quiser — a porta fica sempre aberta."
         },
         {
           name: "🛟 Não foi você?",

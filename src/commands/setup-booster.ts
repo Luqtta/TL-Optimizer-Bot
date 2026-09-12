@@ -24,7 +24,7 @@ function createBoosterEmbed() {
         "2. Vincule sua conta com `/vincular` (o mesmo email da sua conta TL Optimizer)",
         "3. Abra um ticket avisando — a equipe confirma seus boosts e credita o seu mês",
         "",
-        "Ainda não tem conta? Crie de graça em https://thelite.com.br",
+        "Ainda não tem conta? Crie de graça em https://tloptimizer.com",
         "",
         "**Obrigado por impulsionar o servidor!** 🚀"
       ].join("\n")

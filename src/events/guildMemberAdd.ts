@@ -243,7 +243,7 @@ async function sendWelcomeDm(member: GuildMember) {
   const welcomeDmEmbed = new EmbedBuilder()
     .setColor("#3b82f6")
     .setTitle("Bem-vindo à TL Optimizer 🚀")
-    .setURL("https://thelite.com.br")
+    .setURL("https://tloptimizer.com")
     .setThumbnail(member.client.user?.displayAvatarURL({ size: 256 }) ?? null)
     .setDescription(
       [
@@ -251,7 +251,7 @@ async function sendWelcomeDm(member: GuildMember) {
         "",
         "**🎮 Comece agora (grátis)**",
         "Cria tua conta no site e baixa o app. No plano gratuito você já usa o painel de desempenho, o monitoramento em tempo real e a limpeza — sem pagar nada.",
-        "➜ https://thelite.com.br",
+        "➜ https://tloptimizer.com",
         "",
         "**⚡ Quer o máximo? Destrave o PRO**",
         "PC Boost, Game Mode, Auto Limpeza e os Tweaks de otimização — o que acelera o FPS e corta o input lag de verdade — são exclusivos do PRO. Escolhe o plano no site quando quiser.",

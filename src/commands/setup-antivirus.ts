@@ -26,13 +26,13 @@ function createAntivirusEmbed() {
         "Isso é comum no mundo da otimização — **não significa que há vírus**.",
         "",
         "🛠️ **O que fazer se for bloqueado**",
-        "• Baixe **sempre pelo site oficial**: https://thelite.com.br",
+        "• Baixe **sempre pelo site oficial**: https://tloptimizer.com",
         "• Adicione uma exceção para o TL Optimizer no seu antivírus",
         "• Se precisar, abra um ticket que a equipe te ajuda a liberar",
         "",
         "📊 **Transparência total**",
         "Tudo o que o app faz no seu computador está detalhado na nossa Política de Privacidade (seção “O que o app faz no seu computador”):",
-        "https://thelite.com.br/privacidade"
+        "https://tloptimizer.com/privacidade"
       ].join("\n")
     )
     .setImage(

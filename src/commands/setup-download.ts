@@ -11,7 +11,7 @@ import {
 } from "discord.js";
 
 // A página "Como usar" do site já tem o botão de download — um link só cobre os dois.
-const HOW_TO_USE_URL = "https://thelite.com.br/como-usar";
+const HOW_TO_USE_URL = "https://tloptimizer.com/como-usar";
 
 function createDownloadEmbed() {
   return new EmbedBuilder()

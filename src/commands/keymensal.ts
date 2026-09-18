@@ -6,13 +6,15 @@ import {
 
 import { generateMonthlyKey } from "../services/tlApi.service.js";
 
-// Mensagem-padrão de entrega da key (o mod copia e cola no ticket de boost). `mention` = <@id> do
-// booster quando informado, senão o placeholder "@usuario" pra editar na mão.
+// Mensagem-padrão de entrega da key (passo a passo). `mention` = <@id> do booster quando informado;
+// string vazia = saudação sem nome (entrega direta no canal sem @usuario feio); "@usuario" = placeholder
+// pra editar na mão (fluxo de DM).
 // ponytail: mesmo template duplicado no painel web (tl-optimizer-web frontend Admin.tsx, buildKeyMessage,
 // header neutro por lá); mexeu no passo a passo aqui, mexe lá.
 function deliveryMessage(code: string, mention: string): string {
+  const hi = mention ? `## 🎉 Obrigado pelo boost, ${mention}` : "## 🎉 Obrigado pelo boost!";
   return [
-    `## 🎉 Obrigado pelo boost, ${mention}`,
+    hi,
     "",
     "Sua key de ativação já está disponível abaixo:",
     "",
@@ -29,25 +31,27 @@ function deliveryMessage(code: string, mention: string): string {
   ].join("\n");
 }
 
-// [EQUIPE] Gera 1 key do plano MENSAL e devolve a mensagem-padrão pronta pra colar no ticket de boost.
-// Roda no DM do bot (resposta privada). Gate = qualquer cargo em KEY_GEN_ROLE_ID (lista separada por
-// vírgula, ex.: auxiliares + mods) OU admin do Discord, checado buscando o membro no GUILD_ID (funciona
-// no DM, via REST). Plano/quantidade/limite (10/dia por gerador) são travados no backend, e TODA key é
-// rastreável (fica registrado quem gerou e quem usou).
+// [EQUIPE] Gera 1 key do plano MENSAL pro fluxo de boost. Rodado NO TICKET, o bot já entrega a
+// mensagem-padrão no próprio canal; rodado no DM do bot, devolve o bloco pronto pra copiar e colar.
+// Gate = qualquer cargo em KEY_GEN_ROLE_ID (lista separada por vírgula, ex.: auxiliares + mods) OU admin
+// do Discord, checado buscando o membro no GUILD_ID (funciona no DM também). Plano/quantidade/limite
+// (10/dia por gerador) são travados no backend, e TODA key é rastreável (quem gerou e quem usou).
 export const keyMensalCommand = {
   data: new SlashCommandBuilder()
     .setName("keymensal")
-    .setDescription("[EQUIPE] Gera uma key Mensal + mensagem pronta pra entregar no ticket de boost.")
+    .setDescription("[EQUIPE] Gera e entrega uma key Mensal (rode no ticket que o bot entrega ali).")
     .setDMPermission(true)
     .addUserOption((o) =>
       o.setName("usuario")
-        .setDescription("Quem recebeu o boost (mencionado na mensagem). Opcional.")
+        .setDescription("Quem recebeu o boost (mencionado/pingado na entrega). Opcional.")
         .setRequired(false)
     ),
 
   async execute(interaction: ChatInputCommandInteraction) {
-    // Ephemeral só em servidor; no DM já é privado (ephemeral no DM dá erro).
-    await interaction.deferReply({ ephemeral: !!interaction.guild });
+    const inGuild = !!interaction.guild;
+    // Ephemeral no servidor (gate/erros/confirmação ficam privados pro mod; a ENTREGA vai pública no
+    // canal). No DM já é privado.
+    await interaction.deferReply({ ephemeral: inGuild });
 
     // Gate de cargo: busca o membro no servidor (funciona no DM também).
     const guildId = process.env.GUILD_ID;
@@ -88,12 +92,35 @@ export const keyMensalCommand = {
     }
 
     const target = interaction.options.getUser("usuario");
-    const mention = target ? `<@${target.id}>` : "@usuario";
 
+    // No servidor: entrega direto no canal (ticket). Só a confirmação fica privada pro mod.
+    if (inGuild) {
+      const msg = deliveryMessage(code, target ? `<@${target.id}>` : "");
+      const channel = interaction.channel;
+      if (channel?.isSendable()) {
+        try {
+          await channel.send({
+            content: msg,
+            allowedMentions: { users: target ? [target.id] : [] }
+          });
+          await interaction.editReply(
+            "✅ Key gerada e entregue neste canal. Uso exclusivo pra boost, e é rastreável (fica registrado que você gerou)."
+          );
+          return;
+        } catch {
+          // sem permissão de enviar aqui: cai no fallback de copiar/colar abaixo
+        }
+      }
+      await interaction.editReply(
+        "✅ Key gerada (não consegui postar no canal, cole você mesmo). Rastreável.\n\n```\n" + msg + "\n```"
+      );
+      return;
+    }
+
+    // No DM: devolve o bloco pronto pra copiar e colar no ticket.
     await interaction.editReply(
-      "✅ Key gerada. **Uso exclusivo pra entrega de boost** — e ela é **rastreável** " +
-      "(fica registrado que você gerou e quem resgatar). Copie a mensagem abaixo e cole no ticket:\n\n" +
-      "```\n" + deliveryMessage(code, mention) + "\n```"
+      "✅ Key gerada. **Uso exclusivo pra entrega de boost** e **rastreável**. Copie a mensagem abaixo e cole no ticket:\n\n" +
+      "```\n" + deliveryMessage(code, target ? `<@${target.id}>` : "@usuario") + "\n```"
     );
   }
 };

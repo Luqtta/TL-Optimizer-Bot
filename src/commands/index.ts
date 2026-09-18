@@ -10,6 +10,7 @@ import { setupApresentacaoCommand } from "./setup-apresentacao.js";
 import { setupAntivirusCommand } from "./setup-antivirus.js";
 import { setupVerificarCommand } from "./setup-verificar.js";
 import { setupBoosterCommand } from "./setup-booster.js";
+import { keyMensalCommand } from "./keymensal.js";
 import { setupDownloadCommand } from "./setup-download.js";
 import { sorteioCommand } from "./sorteio.js";
 import { sugestaoCommand } from "./sugestao.js";
@@ -42,6 +43,7 @@ export const commands: BotCommand[] = [
   setupAntivirusCommand,
   setupVerificarCommand,
   setupBoosterCommand,
+  keyMensalCommand,
   setupDownloadCommand,
   sorteioCommand,
   sugestaoCommand,

@@ -18,7 +18,7 @@ import {
   addSyncLog
 } from "./database.service.js";
 
-import { syncUserRolesInAllGuilds } from "./sync.service.js";
+import { syncUserRolesInAllGuilds, syncPlaybookRoleInAllGuilds } from "./sync.service.js";
 import { sendSyncNotification } from "./dm.service.js";
 
 import type { WebhookEvent, LinkedUser } from "../types/index.js";
@@ -98,6 +98,8 @@ export function registerTlWebhookRoutes(app: Express, client: Client) {
         email: data.email,
         previousPlan: data.previousPlan,
         newPlan: data.newPlan,
+        playbook: typeof data.playbook === "boolean" ? data.playbook : undefined,
+        subscriptionStatus: data.subscriptionStatus,
         timestamp: webhookTimestamp * 1000
       };
 
@@ -174,6 +176,14 @@ async function dispatchWebhookEvent(
       await handleRefunded(client, event);
       break;
 
+    case "PLAYBOOK_GRANTED":
+      await handlePlaybook(client, event, true);
+      break;
+
+    case "PLAYBOOK_REVOKED":
+      await handlePlaybook(client, event, false);
+      break;
+
     default:
       console.warn("[WEBHOOK] Evento desconhecido:", event.type);
   }
@@ -188,7 +198,8 @@ async function handleWebhookEvent(
     discordId: event.discordId,
     email: event.email,
     previousPlan: event.previousPlan,
-    newPlan: event.newPlan
+    newPlan: event.newPlan,
+    playbook: event.playbook
   });
 
   try {
@@ -243,6 +254,7 @@ export async function reprocessPendingWebhookEvents(
       email: row.email,
       previousPlan: row.previousPlan ?? undefined,
       newPlan: row.newPlan ?? undefined,
+      playbook: row.playbook === null ? undefined : row.playbook === 1,
       timestamp: row.timestamp
     };
 
@@ -276,7 +288,8 @@ async function handleLinked(client: Client, event: WebhookEvent): Promise<void> 
     email: event.email,
     plan: (event.newPlan || "FREE") as "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY" | "LIFETIME" | "FREE",
     status: "ACTIVE",
-    updatedAt: event.timestamp
+    updatedAt: event.timestamp,
+    playbook: event.playbook
   };
 
   addLinkedUser(newUser);
@@ -288,6 +301,11 @@ async function handleLinked(client: Client, event: WebhookEvent): Promise<void> 
     event.newPlan || "FREE"
   );
 
+  // Cargo do Playbook pela posse no payload (evento antigo sem o campo: o reconcile acerta).
+  if (event.playbook !== undefined) {
+    await syncPlaybookRoleInAllGuilds(client, event.discordId, event.playbook);
+  }
+
   // Enviar DM
   await sendSyncNotification(client, event.discordId, "LINKED");
 
@@ -298,8 +316,9 @@ async function handleUnlinked(
   client: Client,
   event: WebhookEvent
 ): Promise<void> {
-  // Remover cargos
+  // Remover cargos (o do Playbook também: sem vínculo não há cargo nenhum)
   await syncUserRolesInAllGuilds(client, event.discordId, "FREE");
+  await syncPlaybookRoleInAllGuilds(client, event.discordId, false);
 
   // Remover do banco de dados
   removeLinkedUser(event.discordId);
@@ -481,6 +500,7 @@ async function handleAccountDeleted(
   // Mesma remoção de cargo do EXPIRED, mas a DM é a de "conta apagada" (não a de "assinatura
   // expirou, renove", que ficava errada pra quem apagou a conta de propósito).
   await syncUserRolesInAllGuilds(client, event.discordId, "FREE");
+  await syncPlaybookRoleInAllGuilds(client, event.discordId, false);
 
   removeLinkedUser(event.discordId);
 
@@ -495,16 +515,51 @@ async function handleRefunded(
   client: Client,
   event: WebhookEvent
 ): Promise<void> {
-  // Remove os 3 cargos de assinatura pelo discordId do payload.
+  // Estorno de PLANO: remove os cargos de plano pelo discordId do payload. O cargo do Playbook não é tocado
+  // aqui (estorno do Playbook chega como PLAYBOOK_REVOKED).
   await syncUserRolesInAllGuilds(client, event.discordId, "FREE");
 
-  // Remove o registro local se existir (no-op se não existir).
-  removeLinkedUser(event.discordId);
+  if (event.playbook === true) {
+    // Ainda tem o Playbook: o vínculo continua (só o plano foi estornado).
+    addLinkedUser({
+      discordId: event.discordId,
+      email: event.email,
+      plan: "FREE",
+      status: "EXPIRED",
+      updatedAt: event.timestamp,
+      playbook: true
+    });
+  } else {
+    // Remove o registro local se existir (no-op se não existir).
+    removeLinkedUser(event.discordId);
+  }
 
   // Enviar DM
   await sendSyncNotification(client, event.discordId, "REFUNDED");
 
   console.log(`[WEBHOOK] Reembolso processado para ${event.discordId}.`);
+}
+
+// Posse do Playbook concedida (avulso, bump, admin) ou revogada (estorno, chargeback, admin). Só o cargo do
+// Playbook e a flag local mudam: plano e vínculo ficam como estão.
+async function handlePlaybook(client: Client, event: WebhookEvent, owns: boolean): Promise<void> {
+  if (!updateLinkedUser(event.discordId, { playbook: owns })) {
+    // Sem registro local (banco do bot novo): cria com o plano do payload; o reconcile acerta o resto.
+    const status = event.subscriptionStatus === "ACTIVE" || event.subscriptionStatus === "CANCELED"
+      ? event.subscriptionStatus : "EXPIRED";
+    addLinkedUser({
+      discordId: event.discordId,
+      email: event.email,
+      plan: (event.newPlan || "FREE") as LinkedUser["plan"],
+      status,
+      updatedAt: event.timestamp,
+      playbook: owns
+    });
+  }
+
+  await syncPlaybookRoleInAllGuilds(client, event.discordId, owns);
+
+  console.log(`[WEBHOOK] Playbook ${owns ? "concedido a" : "revogado de"} ${event.discordId}.`);
 }
 
 function timingSafeEqual(a: string, b: string): boolean {

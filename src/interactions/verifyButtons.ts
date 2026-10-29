@@ -11,7 +11,7 @@ import {
 
 import { requestDiscordLink, confirmDiscordCode } from "../services/tlApi.service.js";
 import { addLinkedUser } from "../services/database.service.js";
-import { syncUserRolesInAllGuilds } from "../services/sync.service.js";
+import { syncUserRolesInAllGuilds, syncPlaybookRoleInAllGuilds } from "../services/sync.service.js";
 
 // Fluxo seguro de "pegar cargo de assinante" pelo painel, todo dentro do canal (sem slash command):
 //   botão "verify_start" -> modal do email -> backend manda código pro email
@@ -22,7 +22,7 @@ export async function handleVerifyButton(interaction: ButtonInteraction) {
   if (interaction.customId === "verify_start") {
     const modal = new ModalBuilder()
       .setCustomId("verify_email_modal")
-      .setTitle("Verificar assinatura");
+      .setTitle("Vincular conta");
 
     const emailInput = new TextInputBuilder()
       .setCustomId("verify_email")
@@ -102,21 +102,30 @@ export async function handleVerifyModal(interaction: ModalSubmitInteraction) {
       const data = await confirmDiscordCode(interaction.user.id, code);
 
       await syncUserRolesInAllGuilds(interaction.client, interaction.user.id, data.plan);
+      await syncPlaybookRoleInAllGuilds(interaction.client, interaction.user.id, data.playbook === true);
 
       addLinkedUser({
         discordId: interaction.user.id,
         email: data.email,
         plan: data.plan,
         status: "ACTIVE",
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
+        playbook: data.playbook === true
       });
 
+      const roles = [
+        data.plan && data.plan !== "FREE" ? `o cargo do plano (**${data.plan}**)` : null,
+        data.playbook === true ? "o cargo **TL Playbook**" : null
+      ].filter(Boolean);
+
       await interaction.editReply({
-        content: `Conta verificada com sucesso! Seu cargo de assinante (**${data.plan}**) já foi liberado. Aproveite 🎉`
+        content: roles.length > 0
+          ? `Conta vinculada com sucesso. Já liberei ${roles.join(" e ")}.`
+          : "Conta vinculada com sucesso."
       });
     } catch (error: any) {
       await interaction.editReply({
-        content: error?.message || "Código inválido ou expirado. Clique em Verificar assinatura e tente de novo."
+        content: error?.message || "Código inválido ou expirado. Clique em Vincular conta e tente de novo."
       });
     }
     return;

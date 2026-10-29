@@ -7,7 +7,8 @@ import type { LinkedUser, Giveaway } from "../types/index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dbDir = path.join(__dirname, "../../data");
-const dbPath = path.join(dbDir, "bot.db");
+// BOT_DB_PATH: so' pro check (scripts/check-playbook.ts) rodar num arquivo temporario.
+const dbPath = process.env.BOT_DB_PATH || path.join(dbDir, "bot.db");
 
 let db: any = null;
 
@@ -98,6 +99,21 @@ export function initializeDatabase(): void {
     console.error("[DATABASE] Falha na migração do CHECK de plano:", error.message);
   }
 
+  // Cargo do TL Playbook: posse ativa do Playbook no vínculo (e no evento, pro reprocessamento). Idempotente.
+  try {
+    const columns = (table: string) =>
+      (db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).map((c) => c.name);
+    if (!columns("linked_users").includes("playbook")) {
+      db.exec("ALTER TABLE linked_users ADD COLUMN playbook INTEGER NOT NULL DEFAULT 0");
+      console.log("[DATABASE] Migração aplicada: coluna playbook em linked_users.");
+    }
+    if (!columns("webhook_events").includes("playbook")) {
+      db.exec("ALTER TABLE webhook_events ADD COLUMN playbook INTEGER");
+    }
+  } catch (error: any) {
+    console.error("[DATABASE] Falha na migração da coluna playbook:", error.message);
+  }
+
   console.log("[DATABASE] Banco de dados inicializado em:", dbPath);
 }
 
@@ -124,23 +140,28 @@ export function addLinkedUser(user: LinkedUser): boolean {
   try {
     // Upsert: se o discord_id já existir (re-vinculação, troca de e-mail,
     // reenvio de webhook), atualiza em vez de falhar na PRIMARY KEY.
+    // playbook undefined = MANTÉM o valor salvo: os eventos de plano não sabem nem mexem no Playbook.
     const stmt = db.prepare(`
-      INSERT INTO linked_users (discord_id, email, plan, status, updated_at, created_at)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO linked_users (discord_id, email, plan, status, updated_at, created_at, playbook)
+      VALUES (?, ?, ?, ?, ?, ?, COALESCE(?, 0))
       ON CONFLICT(discord_id) DO UPDATE SET
         email = excluded.email,
         plan = excluded.plan,
         status = excluded.status,
-        updated_at = excluded.updated_at
+        updated_at = excluded.updated_at,
+        playbook = COALESCE(?, linked_users.playbook)
     `);
 
+    const playbook = user.playbook === undefined ? null : user.playbook ? 1 : 0;
     const result = stmt.run(
       user.discordId,
       user.email,
       user.plan,
       user.status || "ACTIVE",
       user.updatedAt,
-      Date.now()
+      Date.now(),
+      playbook,
+      playbook
     );
 
     return result.changes > 0;
@@ -155,12 +176,12 @@ export function getLinkedUser(discordId: string): LinkedUser | null {
 
   try {
     const stmt = db.prepare(`
-      SELECT discord_id as discordId, email, plan, status, updated_at as updatedAt
+      SELECT discord_id as discordId, email, plan, status, updated_at as updatedAt, playbook
       FROM linked_users
       WHERE discord_id = ?
     `);
 
-    return stmt.get(discordId) as LinkedUser | undefined || null;
+    return toLinkedUser(stmt.get(discordId));
   } catch (error: any) {
     console.error("[DATABASE] Erro ao buscar usuário vinculado:", error.message);
     return null;
@@ -172,12 +193,12 @@ export function getLinkedUserByEmail(email: string): LinkedUser | null {
 
   try {
     const stmt = db.prepare(`
-      SELECT discord_id as discordId, email, plan, status, updated_at as updatedAt
+      SELECT discord_id as discordId, email, plan, status, updated_at as updatedAt, playbook
       FROM linked_users
       WHERE email = ?
     `);
 
-    return stmt.get(email) as LinkedUser | undefined || null;
+    return toLinkedUser(stmt.get(email));
   } catch (error: any) {
     console.error("[DATABASE] Erro ao buscar usuário por email:", error.message);
     return null;
@@ -189,12 +210,12 @@ export function getAllLinkedUsers(): LinkedUser[] {
 
   try {
     const stmt = db.prepare(`
-      SELECT discord_id as discordId, email, plan, status, updated_at as updatedAt
+      SELECT discord_id as discordId, email, plan, status, updated_at as updatedAt, playbook
       FROM linked_users
       ORDER BY updated_at DESC
     `);
 
-    return stmt.all() as LinkedUser[];
+    return (stmt.all() as any[]).map((row) => toLinkedUser(row)!);
   } catch (error: any) {
     console.error("[DATABASE] Erro ao buscar todos os usuários:", error.message);
     return [];
@@ -220,6 +241,10 @@ export function updateLinkedUser(discordId: string, updates: Partial<Omit<Linked
       parts.push("status = ?");
       values.push(updates.status);
     }
+    if (updates.playbook !== undefined) {
+      parts.push("playbook = ?");
+      values.push(updates.playbook ? 1 : 0);
+    }
 
     parts.push("updated_at = ?");
     values.push(Date.now());
@@ -238,6 +263,12 @@ export function updateLinkedUser(discordId: string, updates: Partial<Omit<Linked
     console.error("[DATABASE] Erro ao atualizar usuário vinculado:", error.message);
     return false;
   }
+}
+
+// SQLite guarda o playbook como 0/1: devolve boolean.
+function toLinkedUser(row: any): LinkedUser | null {
+  if (!row) return null;
+  return { ...row, playbook: row.playbook === 1 };
 }
 
 export function removeLinkedUser(discordId: string): boolean {
@@ -261,13 +292,14 @@ export function addWebhookEvent(event: {
   email?: string;
   previousPlan?: string;
   newPlan?: string;
+  playbook?: boolean;
 }): number {
   const db = getDatabase();
 
   try {
     const stmt = db.prepare(`
-      INSERT INTO webhook_events (event_type, discord_id, email, previous_plan, new_plan, timestamp, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO webhook_events (event_type, discord_id, email, previous_plan, new_plan, timestamp, created_at, playbook)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = stmt.run(
@@ -277,7 +309,8 @@ export function addWebhookEvent(event: {
       event.previousPlan || null,
       event.newPlan || null,
       Date.now(),
-      Date.now()
+      Date.now(),
+      event.playbook === undefined ? null : event.playbook ? 1 : 0
     );
 
     return result.lastInsertRowid as number;
@@ -307,6 +340,7 @@ export interface PendingWebhookEvent {
   email: string | null;
   previousPlan: string | null;
   newPlan: string | null;
+  playbook: number | null;
   timestamp: number;
 }
 
@@ -325,6 +359,7 @@ export function getPendingWebhookEvents(
         email,
         previous_plan AS previousPlan,
         new_plan AS newPlan,
+        playbook,
         timestamp
       FROM webhook_events
       WHERE processed = 0 AND timestamp >= ?

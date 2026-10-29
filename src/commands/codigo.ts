@@ -5,7 +5,7 @@ import {
 
 import { confirmDiscordCode } from "../services/tlApi.service.js";
 import { addLinkedUser } from "../services/database.service.js";
-import { syncUserRolesInAllGuilds } from "../services/sync.service.js";
+import { syncUserRolesInAllGuilds, syncPlaybookRoleInAllGuilds } from "../services/sync.service.js";
 
 export const codigoCommand = {
   data: new SlashCommandBuilder()
@@ -63,6 +63,7 @@ export const codigoCommand = {
         interaction.user.id,
         data.plan
       );
+      await syncPlaybookRoleInAllGuilds(interaction.client, interaction.user.id, data.playbook === true);
 
       /*
        * Salvar no banco de dados
@@ -72,7 +73,8 @@ export const codigoCommand = {
         email: data.email,
         plan: data.plan,
         status: "ACTIVE",
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
+        playbook: data.playbook === true
       });
 
       /*
@@ -82,7 +84,8 @@ export const codigoCommand = {
 
       await interaction.editReply({
         content:
-          `Conta vinculada com sucesso.\nPlano detectado: ${data.plan}`
+          `Conta vinculada com sucesso.\nPlano detectado: ${data.plan}` +
+          (data.playbook === true ? "\nTL Playbook: cargo liberado." : "")
       });
 
     } catch (error: any) {

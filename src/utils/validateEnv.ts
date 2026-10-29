@@ -18,6 +18,7 @@ const RECOMMENDED: Record<string, string> = {
   ROLE_WEEKLY_ID: "cargo do plano semanal",
   ROLE_YEARLY_ID: "cargo do plano anual",
   ROLE_LIFETIME_ID: "cargo do plano vitalício",
+  ROLE_PLAYBOOK_ID: "cargo do TL Playbook (independente dos cargos de plano)",
   TL_WEBHOOK_SECRET: "validação do webhook do TL Optimizer",
   GITHUB_WEBHOOK_SECRET: "validação do webhook do GitHub",
   FEATURE_CHANNEL_ID: "canal de releases/atualizações",

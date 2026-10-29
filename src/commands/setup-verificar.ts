@@ -13,14 +13,14 @@ import {
 function createVerifyEmbed() {
   return new EmbedBuilder()
     .setColor("#3b82f6")
-    .setTitle("🔒 Verifique sua assinatura")
+    .setTitle("Vincule sua conta TL Optimizer")
     .setDescription(
       [
-        "É assinante do **TL Optimizer**? Verifique com o email da sua compra para receber o **cargo de assinante** e destravar os canais VIP + benefícios exclusivos.",
+        "Vincule o e-mail da sua conta do site para receber automaticamente os cargos das suas compras: o do seu plano e o do TL Playbook.",
         "",
-        "Clique em **Verificar assinatura**, informe seu email e confirme com o código que enviamos — rápido e seguro.",
+        "Clique em **Vincular conta**, informe o e-mail e confirme com o código que enviamos.",
         "",
-        "Ainda não é assinante? Crie sua conta e escolha um plano em https://tloptimizer.com"
+        "Ainda não tem conta? Crie em https://tloptimizer.com"
       ].join("\n")
     );
 }
@@ -28,7 +28,7 @@ function createVerifyEmbed() {
 export const setupVerificarCommand = {
   data: new SlashCommandBuilder()
     .setName("setup-verificar")
-    .setDescription("Envia o painel de verificação de assinatura neste canal.")
+    .setDescription("Envia o painel de vínculo de conta (cargos de plano e TL Playbook) neste canal.")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   async execute(interaction: ChatInputCommandInteraction) {
@@ -55,7 +55,7 @@ export const setupVerificarCommand = {
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder()
         .setCustomId("verify_start")
-        .setLabel("Verificar assinatura")
+        .setLabel("Vincular conta")
         .setStyle(ButtonStyle.Primary)
     );
 

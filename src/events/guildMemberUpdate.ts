@@ -7,6 +7,8 @@ import { getLinkedUser } from "../services/database.service.js";
 import {
   logSyncAction,
   syncUserRoles,
+  syncPlaybookRole,
+  playbookRoleId,
   isBotManagedSync
 } from "../services/sync.service.js";
 
@@ -24,6 +26,8 @@ export async function guildMemberUpdateEvent(
   newMember: GuildMember
 ): Promise<void> {
   try {
+    await checkPlaybookRole(oldMember, newMember);
+
     const planRoleIds = {
       WEEKLY: process.env.ROLE_WEEKLY_ID,
       MONTHLY: process.env.ROLE_MONTHLY_ID,
@@ -106,5 +110,46 @@ export async function guildMemberUpdateEvent(
       "[ANTI-TAMPER] Erro no guildMemberUpdate:",
       error?.message ?? error
     );
+  }
+}
+
+// Anti-tampering do cargo do TL Playbook, separado do de plano: o esperado é a posse do Playbook no banco local
+// (flag playbook do vínculo). Tirado à mão de quem tem a posse volta; dado à mão a quem não tem sai. Mesmo
+// ANTI_TAMPER_ENFORCE dos cargos de plano: sem ele, só alerta no canal de logs.
+async function checkPlaybookRole(
+  oldMember: GuildMember | PartialGuildMember,
+  newMember: GuildMember
+): Promise<void> {
+  const roleId = playbookRoleId();
+  if (!roleId) return;
+
+  const has = newMember.roles.cache.has(roleId);
+  if (oldMember.roles?.cache?.has(roleId) === has) return;
+  if (isBotManagedSync(newMember.id)) return;
+
+  const expected = getLinkedUser(newMember.id)?.playbook === true;
+  if (has === expected) return;
+
+  const reason =
+    `Cargo TL Playbook ${has ? "dado" : "tirado"} à mão de ${newMember.user.tag}. ` +
+    `Banco: ${expected ? "tem a posse" : "sem posse"}.`;
+
+  if (process.env.ANTI_TAMPER_ENFORCE === "true") {
+    await syncPlaybookRole(newMember, expected);
+    await logSyncAction(newMember.guild, {
+      discordId: newMember.id,
+      action: "ANTI_TAMPER_PLAYBOOK_ENFORCED",
+      reason: `${reason} → ${expected ? "devolvido" : "removido"}.`,
+      success: true
+    });
+    console.warn(`[ANTI-TAMPER] Revertido: ${reason}`);
+  } else {
+    await logSyncAction(newMember.guild, {
+      discordId: newMember.id,
+      action: "ANTI_TAMPER_PLAYBOOK_DETECTED",
+      reason: `${reason} (apenas alerta; defina ANTI_TAMPER_ENFORCE=true para reverter)`,
+      success: false
+    });
+    console.warn(`[ANTI-TAMPER] Detectado: ${reason}`);
   }
 }

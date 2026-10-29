@@ -4,8 +4,8 @@ import {
   TextChannel
 } from "discord.js";
 
-import { addSyncLog } from "./database.service.js";
-import { syncUserRoles } from "./sync.service.js";
+import { addSyncLog, getLinkedUser, updateLinkedUser } from "./database.service.js";
+import { syncUserRoles, syncPlaybookRole } from "./sync.service.js";
 
 // QUARTERLY = plano Trimestral. O backend manda "QUARTERLY" cru; so' o ANUAL e' traduzido
 // pra "YEARLY" na saida dele (DiscordSyncNotifier.planLabel), por vocabulario historico do bot.
@@ -15,6 +15,8 @@ interface BackendLink {
   discordId: string;
   plan: PlanName;
   status: "ACTIVE" | "CANCELED" | "EXPIRED";
+  // Posse ativa do TL Playbook (backend). Cargo próprio, reconciliado à parte do plano.
+  playbook: boolean;
 }
 
 const BATCH_SIZE = 5; // quantos membros reconciliar em paralelo
@@ -107,7 +109,8 @@ async function fetchLinksPage(
       discordId: u.discordId,
       plan: (u.plan ?? "FREE") as PlanName,
       // Tolera os dois nomes de campo (status / subscriptionStatus).
-      status: (u.status ?? u.subscriptionStatus ?? "ACTIVE") as BackendLink["status"]
+      status: (u.status ?? u.subscriptionStatus ?? "ACTIVE") as BackendLink["status"],
+      playbook: u.playbook === true
     }))
     .filter((l: BackendLink) => Boolean(l.discordId));
 
@@ -165,6 +168,12 @@ async function reconcileLink(
   const allIds = planRoleIds();
   let corrected = false;
 
+  // A flag local é o que o anti-tamper consulta: mantém igual à do backend.
+  const local = getLinkedUser(link.discordId);
+  if (local && local.playbook !== link.playbook) {
+    updateLinkedUser(link.discordId, { playbook: link.playbook });
+  }
+
   for (const [, guild] of client.guilds.cache) {
     const member = await guild.members.fetch(link.discordId).catch(() => null);
 
@@ -179,18 +188,28 @@ async function reconcileLink(
       (id) => member.roles.cache.has(id) === (id === desired)
     );
 
-    if (alreadyCorrect) {
-      continue;
+    if (!alreadyCorrect) {
+      const result = await syncUserRoles(member, plan);
+
+      if (result.success) {
+        corrected = true;
+        addSyncLog({
+          discordId: link.discordId,
+          action: `RECONCILE_${plan === "FREE" ? "REMOVED" : "SET"}`,
+          reason: `Cargo reconciliado para ${plan} (status backend: ${link.status})`,
+          success: true
+        });
+      }
     }
 
-    const result = await syncUserRoles(member, plan);
-
-    if (result.success) {
+    // Cargo do Playbook: só pela posse, independente do plano. NO_ACTION quando já está certo.
+    const pb = await syncPlaybookRole(member, link.playbook);
+    if (pb.success && pb.action !== "NO_ACTION") {
       corrected = true;
       addSyncLog({
         discordId: link.discordId,
-        action: `RECONCILE_${plan === "FREE" ? "REMOVED" : "SET"}`,
-        reason: `Cargo reconciliado para ${plan} (status backend: ${link.status})`,
+        action: `RECONCILE_PLAYBOOK_${link.playbook ? "SET" : "REMOVED"}`,
+        reason: pb.reason,
         success: true
       });
     }

@@ -19,5 +19,7 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true
-  }
+  },
+  // scripts/ (checks rodados com tsx) fica fora do build
+  "include": ["src"]
 }

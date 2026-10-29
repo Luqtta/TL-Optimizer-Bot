@@ -4,7 +4,7 @@ import {
 } from "discord.js";
 
 import { removeLinkedUser } from "../services/database.service.js";
-import { syncUserRolesInAllGuilds } from "../services/sync.service.js";
+import { syncUserRolesInAllGuilds, syncPlaybookRoleInAllGuilds } from "../services/sync.service.js";
 
 export const desvincularCommand = {
   data: new SlashCommandBuilder()
@@ -57,6 +57,7 @@ export const desvincularCommand = {
         interaction.user.id,
         "FREE"
       );
+      await syncPlaybookRoleInAllGuilds(interaction.client, interaction.user.id, false);
 
       /*
        * remove do banco de dados

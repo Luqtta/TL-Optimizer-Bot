@@ -32,24 +32,28 @@ export function isBotManagedSync(discordId: string): boolean {
   return true;
 }
 
+// Sinaliza que este membro está sendo sincronizado pelo bot agora (plano ou Playbook).
+function markBotManaged(discordId: string): void {
+  botManagedSyncs.set(discordId, Date.now() + BOT_SYNC_WINDOW_MS);
+
+  // Limpeza proativa para o Map não crescer indefinidamente: agenda a remoção
+  // após a janela, mas só remove se a entrada atual já expirou (não apaga uma
+  // marcação renovada por um sync mais recente).
+  setTimeout(() => {
+    const expiry = botManagedSyncs.get(discordId);
+    if (expiry !== undefined && Date.now() >= expiry) {
+      botManagedSyncs.delete(discordId);
+    }
+  }, BOT_SYNC_WINDOW_MS + 1000).unref();
+}
+
 export async function syncUserRoles(
   member: GuildMember,
   plan: string,
   previousPlan?: string
 ): Promise<SyncResult> {
   try {
-    // Sinaliza que este membro está sendo sincronizado pelo bot agora.
-    botManagedSyncs.set(member.id, Date.now() + BOT_SYNC_WINDOW_MS);
-
-    // Limpeza proativa para o Map não crescer indefinidamente: agenda a remoção
-    // após a janela, mas só remove se a entrada atual já expirou (não apaga uma
-    // marcação renovada por um sync mais recente).
-    setTimeout(() => {
-      const expiry = botManagedSyncs.get(member.id);
-      if (expiry !== undefined && Date.now() >= expiry) {
-        botManagedSyncs.delete(member.id);
-      }
-    }, BOT_SYNC_WINDOW_MS + 1000).unref();
+    markBotManaged(member.id);
 
     const weeklyRoleId = process.env.ROLE_WEEKLY_ID;
     const monthlyRoleId = process.env.ROLE_MONTHLY_ID;
@@ -133,6 +137,75 @@ export async function syncUserRoles(
       success: false,
       reason: error.message
     };
+  }
+}
+
+// ---- Cargo do TL Playbook ----
+// INDEPENDENTE dos cargos de plano: só a posse do Playbook decide (eventos PLAYBOOK_*, vínculo, reconcile e
+// anti-tamper). O syncUserRoles (plano) nunca toca nele: troca de plano, EXPIRED, upgrade e renovação não o tiram.
+export function playbookRoleId(): string | null {
+  const id = process.env.ROLE_PLAYBOOK_ID;
+  if (!id) return null;
+  const planIds = [process.env.ROLE_WEEKLY_ID, process.env.ROLE_MONTHLY_ID, process.env.ROLE_QUARTERLY_ID,
+    process.env.ROLE_YEARLY_ID, process.env.ROLE_LIFETIME_ID];
+  if (planIds.includes(id)) {
+    // O sync de plano tiraria o cargo a cada troca de plano: melhor não dar do que dar e tirar.
+    console.error("[SYNC] ROLE_PLAYBOOK_ID é igual a um cargo de plano. Cargo do Playbook desligado até corrigir.");
+    return null;
+  }
+  return id;
+}
+
+export async function syncPlaybookRole(member: GuildMember, owns: boolean): Promise<SyncResult> {
+  const roleId = playbookRoleId();
+  if (!roleId) {
+    return { success: true, action: "NO_ACTION", reason: "ROLE_PLAYBOOK_ID ausente ou inválido" };
+  }
+  if (!member.guild.roles.cache.has(roleId)) {
+    console.warn(`[SYNC] Cargo do Playbook (id ${roleId}) não existe na guild ${member.guild.name}. Confira ROLE_PLAYBOOK_ID.`);
+    return { success: true, action: "NO_ACTION", reason: "Cargo do Playbook não existe nesta guild" };
+  }
+  if (member.roles.cache.has(roleId) === owns) {
+    return { success: true, action: "NO_ACTION", reason: `Cargo TL Playbook já ${owns ? "presente" : "ausente"}` };
+  }
+  try {
+    markBotManaged(member.id);
+    if (owns) {
+      await member.roles.add(roleId);
+    } else {
+      await member.roles.remove(roleId);
+    }
+    return {
+      success: true,
+      action: owns ? "ADDED_ROLE" : "REMOVED_ROLE",
+      reason: `Cargo TL Playbook ${owns ? "concedido" : "removido"}`
+    };
+  } catch (error: any) {
+    console.error(`[SYNC] Erro no cargo do Playbook para ${member.user.tag}:`, error.message);
+    return { success: false, reason: error.message };
+  }
+}
+
+export async function syncPlaybookRoleInAllGuilds(
+  client: Client,
+  discordId: string,
+  owns: boolean
+): Promise<void> {
+  for (const [, guild] of client.guilds.cache) {
+    const member = await guild.members.fetch(discordId).catch(() => null);
+    if (!member) {
+      console.warn(`[SYNC] Membro ${discordId} não encontrado em ${guild.name}: cargo do Playbook NÃO aplicado.`);
+      continue;
+    }
+    const result = await syncPlaybookRole(member, owns);
+    if (result.action !== "NO_ACTION" || !result.success) {
+      await logSyncAction(guild, {
+        discordId,
+        action: `PLAYBOOK_ROLE_${result.action ?? "ERROR"}`,
+        reason: result.reason,
+        success: result.success
+      });
+    }
   }
 }
 

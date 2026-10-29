@@ -13,7 +13,7 @@ import { requestDiscordLink, confirmDiscordCode } from "../services/tlApi.servic
 import { addLinkedUser } from "../services/database.service.js";
 import { syncUserRolesInAllGuilds, syncPlaybookRoleInAllGuilds } from "../services/sync.service.js";
 
-// Fluxo seguro de "pegar cargo de assinante" pelo painel, todo dentro do canal (sem slash command):
+// Fluxo seguro de "Vincular conta" pelo painel do #tl-cargo (cargos de plano e do TL Playbook), sem slash command:
 //   botão "verify_start" -> modal do email -> backend manda código pro email
 //   -> botão "verify_code_start" -> modal do código -> confirma + libera o cargo.
 // Reusa exatamente o backend do /vincular (requestDiscordLink) e do /codigo (confirmDiscordCode + sync).
@@ -93,7 +93,7 @@ export async function handleVerifyModal(interaction: ModalSubmitInteraction) {
     return;
   }
 
-  // Passo 2: recebeu o código -> confirma, sincroniza os cargos e libera o assinante.
+  // Passo 2: recebeu o código -> confirma e sincroniza os cargos (plano e TL Playbook).
   if (interaction.customId === "verify_code_modal") {
     await interaction.deferReply({ flags: 64 });
     const code = interaction.fields.getTextInputValue("verify_code").trim();

@@ -65,7 +65,7 @@ export const setupVerificarCommand = {
     });
 
     await interaction.reply({
-      content: "✅ Painel de verificação enviado com sucesso.",
+      content: "✅ Painel de vínculo enviado com sucesso.",
       flags: 64
     });
   }

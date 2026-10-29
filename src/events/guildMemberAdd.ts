@@ -256,8 +256,8 @@ async function sendWelcomeDm(member: GuildMember) {
         "**⚡ Quer o máximo? Destrave o PRO**",
         "PC Boost, Game Mode, Auto Limpeza e os Tweaks de otimização — o que acelera o FPS e corta o input lag de verdade — são exclusivos do PRO. Escolhe o plano no site quando quiser.",
         "",
-        "**⭐ Já tem plano ativo? Pega teu cargo VIP**",
-        "Digita `/vincular` aqui no meu privado (ou no servidor) pra conectar tua conta. Assinantes ganham **cargo exclusivo + canais VIP** no Discord na hora, automaticamente."
+        "**⭐ Já tem plano ou o TL Playbook? Pega teus cargos**",
+        "Vincula tua conta no canal **#tl-cargo**, no botão **Vincular conta** (ou digita `/vincular` aqui no meu privado). Quem tem plano ou o TL Playbook ganha os cargos e os canais exclusivos no Discord na hora, automaticamente."
       ].join("\n")
     )
     .setFooter({

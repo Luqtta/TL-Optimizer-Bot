@@ -27,7 +27,7 @@ function deliveryMessage(code: string, mention: string): string {
     "3. Vá até o painel de usuário, clicando no seu perfil",
     "4. No campo \"ativar sua key\", cole a key acima e resgate",
     "5. Abra o programa e entre na sua conta — a licença já estará ativa ✅",
-    "6. Vincule sua conta em cargo-assinante com o email que ativou a key para ter seu cargo exclusivo"
+    "6. Vincule sua conta no canal #tl-cargo, no botão \"Vincular conta\", com o email que ativou a key para ter seu cargo exclusivo"
   ].join("\n");
 }
 

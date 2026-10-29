@@ -37,6 +37,7 @@ import { messageCreateEvent } from "./events/messageCreate.js";
 import { guildMemberAddEvent } from "./events/guildMemberAdd.js";
 import { guildMemberUpdateEvent } from "./events/guildMemberUpdate.js";
 import { validateEnv } from "./utils/validateEnv.js";
+import { guardInteraction } from "./utils/interactionGuard.js";
 
 dotenv.config();
 validateEnv();
@@ -188,6 +189,15 @@ client.once("clientReady", () => {
 
 client.on("interactionCreate", async (interaction: Interaction) => {
   try {
+    const verdict = guardInteraction(interaction);
+    if (verdict === "ignore") return;
+    if (verdict === "forbidden") {
+      if (interaction.isRepliable()) {
+        await interaction.reply({ content: "❌ Comando restrito à administração do servidor.", flags: 64 }).catch(() => {});
+      }
+      return;
+    }
+
     if (interaction.isButton()) {
       if (interaction.customId.startsWith("verify_")) {
         await handleVerifyButton(interaction);

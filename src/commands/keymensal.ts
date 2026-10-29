@@ -53,11 +53,10 @@ export const keyMensalCommand = {
     // canal). No DM já é privado.
     await interaction.deferReply({ ephemeral: inGuild });
 
-    // Gate de cargo: busca o membro no servidor (funciona no DM também).
+    // Gate de cargo: busca o membro no servidor OFICIAL (funciona no DM também). Sem GUILD_ID recusa: cair no
+    // "primeiro servidor do cache" deixava o admin de qualquer servidor que convidou o bot gerar keys.
     const guildId = process.env.GUILD_ID;
-    const guild =
-      (guildId ? interaction.client.guilds.cache.get(guildId) : undefined) ??
-      interaction.client.guilds.cache.first();
+    const guild = guildId ? interaction.client.guilds.cache.get(guildId) : undefined;
 
     if (!guild) {
       await interaction.editReply("❌ Não consegui verificar suas permissões (servidor não encontrado).");

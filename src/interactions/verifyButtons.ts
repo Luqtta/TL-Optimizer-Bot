@@ -11,7 +11,7 @@ import {
 
 import { requestDiscordLink, confirmDiscordCode } from "../services/tlApi.service.js";
 import { addLinkedUser } from "../services/database.service.js";
-import { syncUserRolesInAllGuilds, syncPlaybookRoleInAllGuilds } from "../services/sync.service.js";
+import { syncUserRolesInAllGuilds, syncPlaybookRoleInAllGuilds, rolePlan, localStatus } from "../services/sync.service.js";
 
 // Fluxo seguro de "Vincular conta" pelo painel do #tl-cargo (cargos de plano e do TL Playbook), sem slash command:
 //   botão "verify_start" -> modal do email -> backend manda código pro email
@@ -101,20 +101,22 @@ export async function handleVerifyModal(interaction: ModalSubmitInteraction) {
     try {
       const data = await confirmDiscordCode(interaction.user.id, code);
 
-      await syncUserRolesInAllGuilds(interaction.client, interaction.user.id, data.plan);
+      // Vincular só com o Playbook é permitido: o plano pode estar vencido (cargo de plano só com ele ativo).
+      const plan = rolePlan(data.plan, data.subscriptionStatus);
+      await syncUserRolesInAllGuilds(interaction.client, interaction.user.id, plan);
       await syncPlaybookRoleInAllGuilds(interaction.client, interaction.user.id, data.playbook === true);
 
       addLinkedUser({
         discordId: interaction.user.id,
         email: data.email,
         plan: data.plan,
-        status: "ACTIVE",
+        status: localStatus(data.subscriptionStatus),
         updatedAt: Date.now(),
         playbook: data.playbook === true
       });
 
       const roles = [
-        data.plan && data.plan !== "FREE" ? `o cargo do plano (**${data.plan}**)` : null,
+        plan !== "FREE" ? `o cargo do plano (**${plan}**)` : null,
         data.playbook === true ? "o cargo **TL Playbook**" : null
       ].filter(Boolean);
 

@@ -18,7 +18,7 @@ import {
   addSyncLog
 } from "./database.service.js";
 
-import { syncUserRolesInAllGuilds, syncPlaybookRoleInAllGuilds } from "./sync.service.js";
+import { syncUserRolesInAllGuilds, syncPlaybookRoleInAllGuilds, rolePlan, localStatus } from "./sync.service.js";
 import { sendSyncNotification } from "./dm.service.js";
 
 import type { WebhookEvent, LinkedUser } from "../types/index.js";
@@ -130,8 +130,8 @@ export function registerTlWebhookRoutes(app: Express, client: Client) {
 }
 
 // Apenas despacha o evento para o handler correto. NÃO grava na tabela
-// (quem grava é handleWebhookEvent); assim pode ser reusado no reprocessamento.
-async function dispatchWebhookEvent(
+// (quem grava é handleWebhookEvent); assim pode ser reusado no reprocessamento (e no check).
+export async function dispatchWebhookEvent(
   client: Client,
   event: WebhookEvent
 ): Promise<void> {
@@ -283,11 +283,12 @@ export async function reprocessPendingWebhookEvents(
 }
 
 async function handleLinked(client: Client, event: WebhookEvent): Promise<void> {
+  // Vincular só com o Playbook é permitido: o plano pode estar vencido. O cargo de plano segue o status.
   const newUser: LinkedUser = {
     discordId: event.discordId,
     email: event.email,
     plan: (event.newPlan || "FREE") as "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY" | "LIFETIME" | "FREE",
-    status: "ACTIVE",
+    status: event.subscriptionStatus ? localStatus(event.subscriptionStatus) : "ACTIVE",
     updatedAt: event.timestamp,
     playbook: event.playbook
   };
@@ -298,7 +299,7 @@ async function handleLinked(client: Client, event: WebhookEvent): Promise<void> 
   await syncUserRolesInAllGuilds(
     client,
     event.discordId,
-    event.newPlan || "FREE"
+    rolePlan(event.newPlan, event.subscriptionStatus)
   );
 
   // Cargo do Playbook pela posse no payload (evento antigo sem o campo: o reconcile acerta).
@@ -515,24 +516,20 @@ async function handleRefunded(
   client: Client,
   event: WebhookEvent
 ): Promise<void> {
-  // Estorno de PLANO: remove os cargos de plano pelo discordId do payload. O cargo do Playbook não é tocado
-  // aqui (estorno do Playbook chega como PLAYBOOK_REVOKED).
-  await syncUserRolesInAllGuilds(client, event.discordId, "FREE");
+  // Estorno de PLANO: o cargo de plano segue o estado depois do estorno (estornar um de vários períodos pode
+  // deixar o plano ativo). Sem o status (evento antigo): tira. O cargo do Playbook não é tocado aqui (estorno do
+  // Playbook chega como PLAYBOOK_REVOKED). O vínculo NUNCA sai num estorno: só no /desvincular.
+  const plan = event.subscriptionStatus ? rolePlan(event.newPlan, event.subscriptionStatus) : "FREE";
+  await syncUserRolesInAllGuilds(client, event.discordId, plan, event.previousPlan);
 
-  if (event.playbook === true) {
-    // Ainda tem o Playbook: o vínculo continua (só o plano foi estornado).
-    addLinkedUser({
-      discordId: event.discordId,
-      email: event.email,
-      plan: "FREE",
-      status: "EXPIRED",
-      updatedAt: event.timestamp,
-      playbook: true
-    });
-  } else {
-    // Remove o registro local se existir (no-op se não existir).
-    removeLinkedUser(event.discordId);
-  }
+  addLinkedUser({
+    discordId: event.discordId,
+    email: event.email,
+    plan: (event.newPlan || "FREE") as LinkedUser["plan"],
+    status: plan === "FREE" ? "EXPIRED" : localStatus(event.subscriptionStatus),
+    updatedAt: event.timestamp,
+    playbook: event.playbook
+  });
 
   // Enviar DM
   await sendSyncNotification(client, event.discordId, "REFUNDED");
@@ -545,13 +542,11 @@ async function handleRefunded(
 async function handlePlaybook(client: Client, event: WebhookEvent, owns: boolean): Promise<void> {
   if (!updateLinkedUser(event.discordId, { playbook: owns })) {
     // Sem registro local (banco do bot novo): cria com o plano do payload; o reconcile acerta o resto.
-    const status = event.subscriptionStatus === "ACTIVE" || event.subscriptionStatus === "CANCELED"
-      ? event.subscriptionStatus : "EXPIRED";
     addLinkedUser({
       discordId: event.discordId,
       email: event.email,
       plan: (event.newPlan || "FREE") as LinkedUser["plan"],
-      status,
+      status: localStatus(event.subscriptionStatus),
       updatedAt: event.timestamp,
       playbook: owns
     });

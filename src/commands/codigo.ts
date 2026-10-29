@@ -5,7 +5,7 @@ import {
 
 import { confirmDiscordCode } from "../services/tlApi.service.js";
 import { addLinkedUser } from "../services/database.service.js";
-import { syncUserRolesInAllGuilds, syncPlaybookRoleInAllGuilds } from "../services/sync.service.js";
+import { syncUserRolesInAllGuilds, syncPlaybookRoleInAllGuilds, rolePlan, localStatus } from "../services/sync.service.js";
 
 export const codigoCommand = {
   data: new SlashCommandBuilder()
@@ -61,7 +61,7 @@ export const codigoCommand = {
       await syncUserRolesInAllGuilds(
         interaction.client,
         interaction.user.id,
-        data.plan
+        rolePlan(data.plan, data.subscriptionStatus) // plano vencido (vinculou pelo Playbook) nao da' cargo
       );
       await syncPlaybookRoleInAllGuilds(interaction.client, interaction.user.id, data.playbook === true);
 
@@ -72,7 +72,7 @@ export const codigoCommand = {
         discordId: interaction.user.id,
         email: data.email,
         plan: data.plan,
-        status: "ACTIVE",
+        status: localStatus(data.subscriptionStatus),
         updatedAt: Date.now(),
         playbook: data.playbook === true
       });

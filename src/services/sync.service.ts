@@ -140,6 +140,21 @@ export async function syncUserRoles(
   }
 }
 
+// ---- Estado atual -> cargo de plano ----
+// O vinculo e' permanente (so' sai no /desvincular ou com a conta apagada); os cargos seguem o estado ATUAL. Plano
+// so' da' cargo ACTIVE ou CANCELED (cancelado vale ate' vencer). EXPIRED/INACTIVE = vinculado e sem cargo de plano.
+// status ausente (evento antigo reprocessado, sem o campo) = confia no plano, como antes.
+export function rolePlan(plan: string | null | undefined, status: string | null | undefined): string {
+  if (!plan) return "FREE";
+  if (status === undefined || status === null) return plan;
+  return status === "ACTIVE" || status === "CANCELED" ? plan : "FREE";
+}
+
+// Status do registro local (o CHECK da tabela so' aceita estes tres).
+export function localStatus(status: string | null | undefined): "ACTIVE" | "CANCELED" | "EXPIRED" {
+  return status === "ACTIVE" || status === "CANCELED" ? status : "EXPIRED";
+}
+
 // ---- Cargo do TL Playbook ----
 // INDEPENDENTE dos cargos de plano: só a posse do Playbook decide (eventos PLAYBOOK_*, vínculo, reconcile e
 // anti-tamper). O syncUserRoles (plano) nunca toca nele: troca de plano, EXPIRED, upgrade e renovação não o tiram.

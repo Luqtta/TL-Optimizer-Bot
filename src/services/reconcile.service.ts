@@ -5,7 +5,7 @@ import {
 } from "discord.js";
 
 import { addSyncLog, getLinkedUser, updateLinkedUser } from "./database.service.js";
-import { syncUserRoles, syncPlaybookRole } from "./sync.service.js";
+import { syncUserRoles, syncPlaybookRole, rolePlan } from "./sync.service.js";
 
 // QUARTERLY = plano Trimestral. O backend manda "QUARTERLY" cru; so' o ANUAL e' traduzido
 // pra "YEARLY" na saida dele (DiscordSyncNotifier.planLabel), por vocabulario historico do bot.
@@ -14,7 +14,8 @@ type PlanName = "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY" | "LIFETIME" | "FR
 interface BackendLink {
   discordId: string;
   plan: PlanName;
-  status: "ACTIVE" | "CANCELED" | "EXPIRED";
+  // ACTIVE | CANCELED | EXPIRED | INACTIVE (status efetivo do backend).
+  status: string;
   // Posse ativa do TL Playbook (backend). Cargo próprio, reconciliado à parte do plano.
   playbook: boolean;
 }
@@ -109,7 +110,7 @@ async function fetchLinksPage(
       discordId: u.discordId,
       plan: (u.plan ?? "FREE") as PlanName,
       // Tolera os dois nomes de campo (status / subscriptionStatus).
-      status: (u.status ?? u.subscriptionStatus ?? "ACTIVE") as BackendLink["status"],
+      status: u.status ?? u.subscriptionStatus ?? "ACTIVE",
       playbook: u.playbook === true
     }))
     .filter((l: BackendLink) => Boolean(l.discordId));
@@ -146,10 +147,10 @@ function planRoleIds(): string[] {
   ].filter(Boolean) as string[];
 }
 
-// Só EXPIRED remove o cargo. CANCELED mantém até o vencimento (o backend já
-// devolve EXPIRED quando expira de fato); ACTIVE mantém o plano.
+// Só ACTIVE e CANCELED (vale até o vencimento) dão cargo de plano; EXPIRED e INACTIVE (estornado/revogado) não.
+// O vínculo continua de qualquer forma: o backend lista todo vínculo, com ou sem plano.
 function targetPlan(link: BackendLink): PlanName {
-  return link.status === "EXPIRED" ? "FREE" : link.plan || "FREE";
+  return rolePlan(link.plan, link.status) as PlanName;
 }
 
 // Reconcilia UM vínculo. Só mexe nos cargos quando há divergência — assim não
@@ -159,7 +160,7 @@ function targetPlan(link: BackendLink): PlanName {
 // que e' o que acontece sem o intent GUILD_MEMBERS. Dois cenarios opostos, mesma linha de log.
 let membrosNaoEncontrados = 0;
 
-async function reconcileLink(
+export async function reconcileLink(
   client: Client,
   link: BackendLink
 ): Promise<boolean> {
